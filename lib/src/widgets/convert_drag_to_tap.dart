@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -180,12 +179,7 @@ class DraggableByMouse<T extends Object> extends StatefulWidget {
     required this.onChange,
     this.currentDrag,
     required this.indexDraging,
-  })  : assert(child != null),
-        assert(feedback != null),
-        assert(ignoringFeedbackSemantics != null),
-        assert(ignoringFeedbackPointer != null),
-        assert(maxSimultaneousDrags == null || maxSimultaneousDrags >= 0),
-        assert(dragAnchorStrategy != null);
+  });
   final Function(DragAvatar?, T?) onChange;
 
   final DragAvatar<Object>? currentDrag;
@@ -424,14 +418,6 @@ class _DraggableByMouseState<T extends Object>
     // _recognizer = null;
   }
 
-  void _routePointer(PointerDownEvent event) {
-    if (widget.maxSimultaneousDrags != null &&
-        _activeCount >= widget.maxSimultaneousDrags!) {
-      return;
-    }
-    // _recognizer!.addPointer(event);
-  }
-
   DragAvatar<T>? _avatar;
 
   DragAvatar<T>? _startDrag(Offset position) {
@@ -484,63 +470,34 @@ class _DraggableByMouseState<T extends Object>
     return avatar;
   }
 
-  void _enDrag() {
-    _avatar = null;
-    if (mounted) {
-      setState(() {
-        _activeCount -= 1;
-      });
-    } else {
-      _activeCount -= 1;
-      _disposeRecognizerIfInactive();
-    }
-
-    widget.onDragCompleted!();
-  }
-
   @override
   Widget build(BuildContext context) {
     assert(debugCheckHasOverlay(context));
-    final bool canDrag = widget.maxSimultaneousDrags == null ||
-        _activeCount < widget.maxSimultaneousDrags!;
+    final bool canDrag = widget.indexDraging != null &&
+        widget.indexDraging != widget.data &&
+        widget.currentDrag != null;
     final bool showChild =
         _activeCount == 0 || widget.childWhenDragging == null;
-    // return Listener(
-    //   behavior: widget.hitTestBehavior,
-    //   onPointerDown: canDrag ? _routePointer : null,
-    //   child: showChild ? widget.child : widget.childWhenDragging,
-    // );
-    // print('showChild $showChild')
-    return MouseRegion(
-      onEnter: (event) {
-        if (widget.indexDraging != null &&
-            widget.indexDraging != widget.data &&
-            widget.currentDrag != null) {
-          // _currentDrag!.update(event.position);
-          widget.currentDrag!.updatePos(context);
-        }
-      },
-      child: GestureDetector(
-        onTapDown: (details) {
-          if (_isDrag) {
-            _isDrag = false;
-            _enDrag();
-            widget.onChange(null, widget.data);
-          } else {
-            _isDrag = true;
-            // Cần lấy chính xác vị trí của view
-            final RenderBox box = context.findRenderObject()! as RenderBox;
-            final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
-            _avatar = _startDrag(overlayTopLeft);
-            widget.onChange(_avatar, widget.data);
+    if (canDrag) {
+      return MouseRegion(
+        onEnter: (event) {
+          if (canDrag) {
+            widget.currentDrag!.updatePos(context);
           }
         },
         child: showChild ? widget.child : widget.childWhenDragging,
-      ),
+      );
+    }
+    return GestureDetector(
+      onTap: () {
+        final RenderBox box = context.findRenderObject()! as RenderBox;
+        final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
+        _avatar = _startDrag(overlayTopLeft);
+        widget.onChange(_avatar, widget.data);
+      },
+      child: showChild ? widget.child : widget.childWhenDragging,
     );
   }
-
-  bool _isDrag = false;
 }
 
 /// Represents the details when a specific pointer event occurred on
@@ -560,8 +517,7 @@ class DraggableDetails {
     this.wasAccepted = false,
     required this.velocity,
     required this.offset,
-  })  : assert(velocity != null),
-        assert(offset != null);
+  });
 
   /// Determines whether the [DragTargetMouse] accepted this draggable.
   final bool wasAccepted;
@@ -580,8 +536,7 @@ class DragTargetDetails<T> {
   /// Creates details for a [DragTargetMouse] callback.
   ///
   /// The [offset] must not be null.
-  DragTargetDetails({required this.data, required this.offset})
-      : assert(offset != null);
+  DragTargetDetails({required this.data, required this.offset});
 
   /// The data that was dropped onto this [DragTargetMouse].
   final T data;
@@ -736,7 +691,6 @@ class _DragTargetMouseState<T extends Object>
 
   @override
   Widget build(BuildContext context) {
-    assert(widget.builder != null);
     return MetaData(
       metaData: this,
       behavior: widget.hitTestBehavior,
@@ -767,12 +721,7 @@ class DragAvatar<T extends Object> {
     this.onDragEnd,
     required this.ignoringFeedbackSemantics,
     required this.ignoringFeedbackPointer,
-  })  : assert(overlayState != null),
-        assert(ignoringFeedbackSemantics != null),
-        assert(ignoringFeedbackPointer != null),
-        assert(dragStartPoint != null),
-        assert(feedbackOffset != null),
-        _position = initialPosition {
+  }) : _position = initialPosition {
     _entry = OverlayEntry(builder: _build);
     overlayState.insert(_entry!);
     updateDrag(initialPosition);
@@ -806,6 +755,10 @@ class DragAvatar<T extends Object> {
     finishDrag(_DragEndKind.dropped, _restrictVelocityAxis(details.velocity));
   }
 
+  void enDrag() {
+    finishDrag(_DragEndKind.dropped);
+  }
+
   void cancel() {
     finishDrag(_DragEndKind.canceled);
   }
@@ -819,27 +772,27 @@ class DragAvatar<T extends Object> {
     final List<_DragTargetMouseState<Object>> targets =
         _getDragTargets(result.path).toList();
 
-    bool listsMatch = false;
-    if (targets.length >= _enteredTargets.length &&
-        _enteredTargets.isNotEmpty) {
-      listsMatch = true;
-      final Iterator<_DragTargetMouseState<Object>> iterator = targets.iterator;
-      for (int i = 0; i < _enteredTargets.length; i += 1) {
-        iterator.moveNext();
-        if (iterator.current != _enteredTargets[i]) {
-          listsMatch = false;
-          break;
-        }
-      }
-    }
+    // bool listsMatch = false;
+    // if (targets.length >= _enteredTargets.length &&
+    //     _enteredTargets.isNotEmpty) {
+    //   listsMatch = true;
+    //   final Iterator<_DragTargetMouseState<Object>> iterator = targets.iterator;
+    //   for (int i = 0; i < _enteredTargets.length; i += 1) {
+    //     iterator.moveNext();
+    //     if (iterator.current != _enteredTargets[i]) {
+    //       listsMatch = false;
+    //       break;
+    //     }
+    //   }
+    // }
 
     // If everything's the same, report moves, and bail early.
-    if (listsMatch) {
-      for (final _DragTargetMouseState<Object> target in _enteredTargets) {
-        target.didMove(this);
-      }
-      return;
-    }
+    // if (listsMatch) {
+    //   for (final _DragTargetMouseState<Object> target in _enteredTargets) {
+    //     target.didMove(this);
+    //   }
+    //   return;
+    // }
 
     // Leave old targets.
     _leaveAllEntered();
@@ -902,17 +855,15 @@ class DragAvatar<T extends Object> {
     _activeTarget = null;
     _entry!.remove();
     _entry = null;
-    // TODO(ianh): consider passing _entry as well so the client can perform an animation.
+    // (ianh): consider passing _entry as well so the client can perform an animation.
     onDragEnd?.call(velocity ?? Velocity.zero, _lastOffset!, wasAccepted);
   }
 
   // cần cập nhật chính xác vị trí của item mới
   Widget _build(BuildContext context) {
-    final RenderBox box = overlayState.context.findRenderObject()! as RenderBox;
-    final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
     return Positioned(
       left: horizontal ? _position.dx : null,
-      top: horizontal ? null : _lastOffset!.dy + overlayTopLeft.dy,
+      top: horizontal ? null : _lastOffset!.dy,
       child: IgnorePointer(
         ignoring: ignoringFeedbackPointer,
         ignoringSemantics: ignoringFeedbackSemantics,

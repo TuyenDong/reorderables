@@ -477,7 +477,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
     // Drops toWrap into the last position it was hovering over.
     void onDragEnded() {
 //      reorder(_dragStartIndex, _currentIndex);
-      print('onDragEnded');
       setState(() {
         _reorder(_dragStartIndex, _currentIndex);
         _dragStartIndex = -1;
@@ -488,14 +487,12 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
     }
 
     void onDragStarted() {
-      print('onDragStarted');
       setState(() {
         _draggingWidget = GestureDetector(
             onTap: () {
-              print('_draggingWidget');
+              _currentDrag?.enDrag();
               _currentDrag = null;
               _indexDraging = null;
-              onDragEnded();
             },
             child: draggedItem);
         _dragStartIndex = index;
@@ -639,7 +636,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
             // ),
             onChange: (value, indexV) {
               setState(() {
-                print('onChange');
                 _currentDrag = value;
                 _indexDraging = indexV;
               });
