@@ -4,6 +4,7 @@
 
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -994,20 +995,79 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
 
     if (widget.scrollController != null &&
         PrimaryScrollController.maybeOf(context) == null) {
-      return (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
-          context, widget.direction, wrappedChildren);
+      return MouseRegion(
+        onHover: _onHover,
+        child: LayoutBuilder(builder: (context, constraint) {
+          _maxHeight = constraint.maxHeight;
+          _maxWidth = constraint.maxWidth;
+          return (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
+              context, widget.direction, wrappedChildren);
+        }),
+      );
     } else {
-      return SingleChildScrollView(
-//      key: _contentKey,
-        scrollDirection: widget.scrollDirection,
-        child: (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
-            context, widget.direction, wrappedChildren),
-        padding: widget.padding,
-        controller: _scrollController,
+      return MouseRegion(
+        onHover: _onHover,
+        child: LayoutBuilder(builder: (context, constraint) {
+          _maxHeight = constraint.maxHeight;
+          _maxWidth = constraint.maxWidth;
+          return SingleChildScrollView(
+            //      key: _contentKey,
+            scrollDirection: widget.scrollDirection,
+            child: (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
+                context, widget.direction, wrappedChildren),
+            padding: widget.padding,
+            controller: _scrollController,
+          );
+        }),
       );
     }
 
 //    });
+  }
+
+  late double _maxHeight;
+  late double _maxWidth;
+
+  void _onHover(PointerHoverEvent event) {
+    if (widget.direction == Axis.vertical) {
+      final dy = event.localPosition.dy;
+      if (_scrollController.hasClients) {
+        if (dy < 20 && _scrollController.offset != 0) {
+          _scrollController.animateTo(
+            _scrollController.offset - 100,
+            duration: const Duration(milliseconds: 100),
+            curve: Curves.linear,
+          );
+        } else if (dy > _maxHeight - 20 &&
+            _scrollController.offset !=
+                _scrollController.position.maxScrollExtent) {
+          _scrollController.animateTo(
+            _scrollController.offset + 100,
+            duration: const Duration(milliseconds: 100),
+            curve: Curves.linear,
+          );
+        }
+      }
+    } else {
+      final dx = event.localPosition.dx;
+      if (_scrollController.hasClients) {
+        if (dx < 20 && _scrollController.offset != 0) {
+          _scrollController.animateTo(
+            _scrollController.offset - 200,
+            duration: const Duration(milliseconds: 50),
+            curve: Curves.linear,
+          );
+        } else if (dx > _maxWidth - 20 &&
+            _scrollController.offset !=
+                _scrollController.position.maxScrollExtent) {
+          _scrollController.animateTo(
+            _scrollController.offset + 200,
+            duration: const Duration(milliseconds: 50),
+            curve: Curves.linear,
+          );
+        }
+      }
+    }
   }
 
 //  @override

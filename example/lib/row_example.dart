@@ -106,6 +106,7 @@ class _RowExampleState extends State<RowExample> {
           height: 200,
           child: ReorderableRow(
             crossAxisAlignment: CrossAxisAlignment.start,
+            ignorePrimaryScrollController: true,
             padding: EdgeInsets.only(top: 20),
             children: List.generate(_columns.length, (index) {
               final value = _columns[index];

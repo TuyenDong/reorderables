@@ -5,6 +5,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 
 /// Signature for determining whether the given data will be accepted by a [DragTargetMouse].
 ///
@@ -380,23 +381,8 @@ class DraggableByMouse<T extends Object> extends StatefulWidget {
 
 class _DraggableByMouseState<T extends Object>
     extends State<DraggableByMouse<T>> {
-  @override
-  void initState() {
-    super.initState();
-    // _recognizer = widget.createRecognizer(_startDrag);
-  }
-
-  @override
-  void dispose() {
-    _disposeRecognizerIfInactive();
-    super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    // _recognizer!.gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
-    super.didChangeDependencies();
-  }
+  bool get horizontal => widget.axis == Axis.horizontal;
+  final _forcus = FocusNode();
 
   // This gesture recognizer has an unusual lifetime. We want to support the use
   // case of removing the Draggable from the tree in the middle of a drag. That
@@ -488,15 +474,38 @@ class _DraggableByMouseState<T extends Object>
         child: showChild ? widget.child : widget.childWhenDragging,
       );
     }
-    return GestureDetector(
-      onTap: () {
-        final RenderBox box = context.findRenderObject()! as RenderBox;
-        final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
-        _avatar = _startDrag(overlayTopLeft);
-        widget.onChange(_avatar, widget.data);
-      },
-      child: showChild ? widget.child : widget.childWhenDragging,
+    return RawKeyboardListener(
+      autofocus: true,
+      focusNode: _forcus,
+      onKey: _onKey,
+      child: GestureDetector(
+        onTap: () {
+          final RenderBox box = context.findRenderObject()! as RenderBox;
+          final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
+          _avatar = _startDrag(overlayTopLeft);
+          widget.onChange(_avatar, widget.data);
+        },
+        child: showChild ? widget.child : widget.childWhenDragging,
+      ),
     );
+  }
+
+  void _onKey(RawKeyEvent event) async {
+    if (horizontal) {
+      if (event.isKeyPressed(LogicalKeyboardKey.arrowRight)) {
+        //arrowRight
+        print('arrowRight');
+      } else if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft)) {
+        //arrowLeft
+        print('arrowLeft');
+      }
+    } else {
+      if (event.isKeyPressed(LogicalKeyboardKey.arrowDown)) {
+        //arrowDown
+      } else if (event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {
+        //arrowUp
+      }
+    }
   }
 }
 
