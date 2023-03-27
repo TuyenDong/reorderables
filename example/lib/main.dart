@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Reorderables Demo',
-      home: MyHomePage(title: 'Reorderables Demo Home Page'),
+      home: RowExample(),
     );
   }
 }
