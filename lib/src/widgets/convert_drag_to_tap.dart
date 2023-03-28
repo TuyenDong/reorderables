@@ -382,8 +382,6 @@ class DraggableByMouse<T extends Object> extends StatefulWidget {
 class _DraggableByMouseState<T extends Object>
     extends State<DraggableByMouse<T>> {
   bool get horizontal => widget.axis == Axis.horizontal;
-  final _forcus = FocusNode();
-
   // This gesture recognizer has an unusual lifetime. We want to support the use
   // case of removing the Draggable from the tree in the middle of a drag. That
   // means we need to keep this recognizer alive after this state object has
@@ -422,6 +420,7 @@ class _DraggableByMouseState<T extends Object>
           debugRequiredFor: widget, rootOverlay: widget.rootOverlay),
       data: widget.data,
       axis: widget.axis,
+      size: (context.findRenderObject()! as RenderBox).size,
       initialPosition: position,
       dragStartPoint: dragStartPoint,
       feedback: widget.feedback,
@@ -467,45 +466,20 @@ class _DraggableByMouseState<T extends Object>
     if (canDrag) {
       return MouseRegion(
         onEnter: (event) {
-          if (canDrag) {
-            widget.currentDrag!.updatePos(context);
-          }
+          widget.currentDrag!.updatePos(context);
         },
         child: showChild ? widget.child : widget.childWhenDragging,
       );
     }
-    return RawKeyboardListener(
-      autofocus: true,
-      focusNode: _forcus,
-      onKey: _onKey,
-      child: GestureDetector(
-        onTap: () {
-          final RenderBox box = context.findRenderObject()! as RenderBox;
-          final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
-          _avatar = _startDrag(overlayTopLeft);
-          widget.onChange(_avatar, widget.data);
-        },
-        child: showChild ? widget.child : widget.childWhenDragging,
-      ),
+    return GestureDetector(
+      onTap: () {
+        final RenderBox box = context.findRenderObject()! as RenderBox;
+        final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
+        _avatar = _startDrag(overlayTopLeft);
+        widget.onChange(_avatar, widget.data);
+      },
+      child: showChild ? widget.child : widget.childWhenDragging,
     );
-  }
-
-  void _onKey(RawKeyEvent event) async {
-    if (horizontal) {
-      if (event.isKeyPressed(LogicalKeyboardKey.arrowRight)) {
-        //arrowRight
-        print('arrowRight');
-      } else if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft)) {
-        //arrowLeft
-        print('arrowLeft');
-      }
-    } else {
-      if (event.isKeyPressed(LogicalKeyboardKey.arrowDown)) {
-        //arrowDown
-      } else if (event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {
-        //arrowUp
-      }
-    }
   }
 }
 
@@ -723,6 +697,7 @@ class DragAvatar<T extends Object> {
     required this.overlayState,
     this.data,
     this.axis,
+    required this.size,
     required Offset initialPosition,
     this.dragStartPoint = Offset.zero,
     this.feedback,
@@ -733,11 +708,12 @@ class DragAvatar<T extends Object> {
   }) : _position = initialPosition {
     _entry = OverlayEntry(builder: _build);
     overlayState.insert(_entry!);
-    updateDrag(initialPosition);
+    _updateDrag(initialPosition);
   }
 
   final T? data;
   final Axis? axis;
+  final Size size;
   final Offset dragStartPoint;
   final Widget? feedback;
   final Offset feedbackOffset;
@@ -757,7 +733,7 @@ class DragAvatar<T extends Object> {
   void update(Offset delta) {
     _position = delta;
     // _position += _restrictAxis(delta);
-    updateDrag(_position);
+    _updateDrag(_position);
   }
 
   void end(DragEndDetails details) {
@@ -772,7 +748,7 @@ class DragAvatar<T extends Object> {
     finishDrag(_DragEndKind.canceled);
   }
 
-  void updateDrag(Offset globalPosition) {
+  void _updateDrag(Offset globalPosition) {
     _lastOffset = globalPosition - dragStartPoint;
     _entry!.markNeedsBuild();
     final HitTestResult result = HitTestResult();
@@ -780,28 +756,6 @@ class DragAvatar<T extends Object> {
 
     final List<_DragTargetMouseState<Object>> targets =
         _getDragTargets(result.path).toList();
-
-    // bool listsMatch = false;
-    // if (targets.length >= _enteredTargets.length &&
-    //     _enteredTargets.isNotEmpty) {
-    //   listsMatch = true;
-    //   final Iterator<_DragTargetMouseState<Object>> iterator = targets.iterator;
-    //   for (int i = 0; i < _enteredTargets.length; i += 1) {
-    //     iterator.moveNext();
-    //     if (iterator.current != _enteredTargets[i]) {
-    //       listsMatch = false;
-    //       break;
-    //     }
-    //   }
-    // }
-
-    // If everything's the same, report moves, and bail early.
-    // if (listsMatch) {
-    //   for (final _DragTargetMouseState<Object> target in _enteredTargets) {
-    //     target.didMove(this);
-    //   }
-    //   return;
-    // }
 
     // Leave old targets.
     _leaveAllEntered();
@@ -871,8 +825,8 @@ class DragAvatar<T extends Object> {
   // cần cập nhật chính xác vị trí của item mới
   Widget _build(BuildContext context) {
     return Positioned(
-      left: horizontal ? _position.dx : null,
-      top: horizontal ? null : _lastOffset!.dy,
+      left: horizontal ? _position.dx : _position.dx + 50,
+      top: horizontal ? null : _position.dy,
       child: IgnorePointer(
         ignoring: ignoringFeedbackPointer,
         ignoringSemantics: ignoringFeedbackSemantics,
@@ -906,5 +860,30 @@ class DragAvatar<T extends Object> {
     final RenderBox box = context.findRenderObject()! as RenderBox;
     final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
     update(overlayTopLeft);
+  }
+
+  void onNext() {
+    if (horizontal) {
+      update(Offset(_position.dx + size.width, _position.dy));
+    } else {
+      update(Offset(_position.dx, _position.dy + size.height));
+    }
+  }
+
+  void onPre() {
+    if (horizontal) {
+      update(Offset(_position.dx - size.width, _position.dy));
+    } else {
+      update(Offset(_position.dx, _position.dy - size.height));
+    }
+  }
+
+  void updateOfset(double ofset) {
+    print('updateOfset $ofset');
+    // if (horizontal) {
+    //   update(Offset(_position.dx - ofset, _position.dy));
+    // } else {
+    //   update(Offset(_position.dx, _position.dy + ofset));
+    // }
   }
 }
