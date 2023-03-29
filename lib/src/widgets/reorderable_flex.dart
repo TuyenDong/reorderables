@@ -434,7 +434,7 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
         )
             .then((void value) {
           if (_currentDrag != null) {
-            _currentDrag!.updateOfset(ofset);
+            _currentDrag!.updateOfset(ofset - scrollOffset);
           }
           setState(() {
             _scrolling = false;
@@ -1090,13 +1090,14 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
       _moveByKey = true;
       if (horizontal) {
         if (event.isKeyPressed(LogicalKeyboardKey.arrowRight)) {
-          _currentDrag!.onNext();
+          final RenderBox box = context.findRenderObject()! as RenderBox;
+          _currentDrag!.onNext(box.size.width);
         } else if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft)) {
           _currentDrag!.onPre();
         }
       } else {
         if (event.isKeyPressed(LogicalKeyboardKey.arrowDown)) {
-          _currentDrag!.onNext();
+          _currentDrag!.onNext(_maxHeight);
         } else if (event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {
           _currentDrag!.onPre();
         }
@@ -1129,9 +1130,11 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
   double _scrollZoneWidth() => _maxWidth / 13;
   double _scrollZoneHeight() => _maxHeight / 13;
 
+  // lỗi ko chọn đc icon đầu tiên vì chạy liên tục => bloc luồng
   void _setupCursorTrackerDx(double dx) async {
     _currentMouseDx = dx;
     if (!_isAnimating) {
+      print('_setupCursorTrackerDx');
       _isAnimating = true;
       while (_currentMouseDx != null) {
         if (_currentMouseDx == double.infinity) {
@@ -1157,7 +1160,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
           return;
         }
       }
-      _isAnimating = false;
     }
   }
 
@@ -1201,7 +1203,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
           return;
         }
       }
-      _isAnimating = false;
     }
   }
 

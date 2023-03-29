@@ -862,28 +862,35 @@ class DragAvatar<T extends Object> {
     update(overlayTopLeft);
   }
 
-  void onNext() {
+  void onNext(double max) {
     if (horizontal) {
-      update(Offset(_position.dx + size.width, _position.dy));
+      if ((_position.dx + size.width * 2) <= max) {
+        update(Offset(_position.dx + size.width, _position.dy));
+      }
     } else {
-      update(Offset(_position.dx, _position.dy + size.height));
+      if ((_position.dy + size.height * 2) <= max) {
+        update(Offset(_position.dx, _position.dy + size.height));
+      }
     }
   }
 
   void onPre() {
     if (horizontal) {
-      update(Offset(_position.dx - size.width, _position.dy));
+      if (_position.dx >= size.width) {
+        update(Offset(_position.dx - size.width, _position.dy));
+      }
     } else {
-      update(Offset(_position.dx, _position.dy - size.height));
+      if (_position.dy >= size.height) {
+        update(Offset(_position.dx, _position.dy - size.height));
+      }
     }
   }
 
   void updateOfset(double ofset) {
-    print('updateOfset $ofset');
-    // if (horizontal) {
-    //   update(Offset(_position.dx - ofset, _position.dy));
-    // } else {
-    //   update(Offset(_position.dx, _position.dy + ofset));
-    // }
+    if (horizontal) {
+      update(Offset(_position.dx - ofset, _position.dy));
+    } else {
+      update(Offset(_position.dx, _position.dy - ofset));
+    }
   }
 }
