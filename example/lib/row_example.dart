@@ -14,6 +14,7 @@ class _RowExampleState extends State<RowExample> {
   @override
   void initState() {
     super.initState();
+    controller.notifyDrag = _notifyDrag;
     _columns = [
       'assets/river1.jpg',
       'assets/river2.jpg',
@@ -123,13 +124,13 @@ class _RowExampleState extends State<RowExample> {
               );
             }),
             footer: Container(
-                height: 100,
-                padding: EdgeInsets.all(10),
-                color:  Colors.green,
-                width: 100,
-                margin: EdgeInsets.only(right: 10, top: 20),
-                child: Text('Edit'),
-              ),
+              height: 100,
+              padding: EdgeInsets.all(10),
+              color: Colors.green,
+              width: 100,
+              margin: EdgeInsets.only(right: 10, top: 20),
+              child: Text('Edit'),
+            ),
             onReorder: _onReorder,
             // draggingWidgetOpacity: 0,
             // draggedItemBuilder: (context, index) {
@@ -154,7 +155,10 @@ class _RowExampleState extends State<RowExample> {
           ),
           IconButton(
             onPressed: _onPress,
-            icon: Icon(Icons.add, color: Colors.white,),
+            icon: Icon(
+              Icons.add,
+              color: Colors.white,
+            ),
           )
         ],
       ),
@@ -164,11 +168,8 @@ class _RowExampleState extends State<RowExample> {
   void _onPress() {
     controller.stopReorder();
   }
-}
 
-class DragModel {
-  final String url;
-  bool selected = false;
-
-  DragModel(this.url);
+  void _notifyDrag(bool isDraging) {
+    debugPrint('isDraging $isDraging');
+  }
 }

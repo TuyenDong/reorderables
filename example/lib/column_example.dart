@@ -174,10 +174,3 @@ class _ColumnExampleState extends State<ColumnExample> {
     controller.stopReorder();
   }
 }
-
-class DragModel {
-  final String url;
-  bool selected = false;
-
-  DragModel(this.url);
-}

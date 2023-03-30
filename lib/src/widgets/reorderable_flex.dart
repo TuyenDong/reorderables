@@ -507,6 +507,7 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
     // Drops toWrap into the last position it was hovering over.
     void onDragEnded() {
 //      reorder(_dragStartIndex, _currentIndex);
+      widget.controller?.notifyDrag(false);
       setState(() {
         _reorder(_dragStartIndex, _currentIndex);
         _dragStartIndex = -1;
@@ -517,6 +518,7 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
     }
 
     void onDragStarted() {
+      widget.controller?.notifyDrag(true);
       setState(() {
         _draggingWidget =
             GestureDetector(onTap: stopReorder, child: draggedItem);
@@ -1134,7 +1136,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
   void _setupCursorTrackerDx(double dx) async {
     _currentMouseDx = dx;
     if (!_isAnimating) {
-      print('_setupCursorTrackerDx');
       _isAnimating = true;
       while (_currentMouseDx != null) {
         if (_currentMouseDx == double.infinity) {
@@ -1424,4 +1425,5 @@ class ReorderableColumn extends ReorderableFlex {
 
 class ReorderableController {
   late void Function() stopReorder;
+  late void Function(bool isDraging) notifyDrag;
 }
