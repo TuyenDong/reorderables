@@ -825,7 +825,7 @@ class DragAvatar<T extends Object> {
   Widget _build(BuildContext context) {
     return Positioned(
       left: horizontal ? _position.dx : _position.dx + 50,
-      top: horizontal ? null : _position.dy,
+      top: horizontal ? _position.dy - 50 : _position.dy,
       child: IgnorePointer(
         ignoring: ignoringFeedbackPointer,
         ignoringSemantics: ignoringFeedbackSemantics,
