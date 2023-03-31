@@ -1118,8 +1118,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
   bool get horizontal => widget.direction == Axis.horizontal;
 
   void _onHover(PointerHoverEvent event) {
-    print('_onHover');
-
     if (_scrollController.hasClients) {
       if (widget.direction == Axis.vertical) {
         final dy = event.localPosition.dy;
@@ -1146,7 +1144,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
       final double topOffset = _scrollController.position.minScrollExtent;
       final double bottomOffset = _scrollController.position.maxScrollExtent;
       while (_currentMouseDx != null) {
-        print('_setupCursorTrackerDx');
         if (_currentMouseDx == double.infinity) {
           await _scrollController.animateTo(_scrollController.offset,
               duration: Duration.zero, curve: Curves.linear);
