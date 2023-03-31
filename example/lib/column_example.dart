@@ -173,4 +173,7 @@ class _ColumnExampleState extends State<ColumnExample> {
   void _onPress() {
     controller.stopReorder();
   }
+
+  void _notifyDrag(bool isDraging) {
+  }
 }
