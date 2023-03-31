@@ -1118,13 +1118,13 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
   bool get horizontal => widget.direction == Axis.horizontal;
 
   void _onHover(PointerHoverEvent event) {
-    if (widget.direction == Axis.vertical) {
-      if (_scrollController.hasClients) {
+    print('_onHover');
+
+    if (_scrollController.hasClients) {
+      if (widget.direction == Axis.vertical) {
         final dy = event.localPosition.dy;
         _setupCursorTrackerDy(dy);
-      }
-    } else {
-      if (_scrollController.hasClients) {
+      } else {
         final dx = event.localPosition.dx;
         _setupCursorTrackerDx(dx);
       }
@@ -1134,36 +1134,48 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
   double? _currentMouseDx;
   double? _currentMouseDy;
   bool _isAnimating = false;
-  double _scrollZoneWidth() => _maxWidth / 13;
+  double _scrollZoneWidth() => _maxWidth / 20;
   double _scrollZoneHeight() => _maxHeight / 13;
 
-  // lỗi ko chọn đc icon đầu tiên vì chạy liên tục => bloc luồng
+  //TODO lỗi ko chọn đc icon đầu tiên vì chạy liên tục => bloc luồng
   void _setupCursorTrackerDx(double dx) async {
     _currentMouseDx = dx;
     if (!_isAnimating) {
       _isAnimating = true;
+      final double scrollOffset = _scrollController.offset;
+      final double topOffset = _scrollController.position.minScrollExtent;
+      final double bottomOffset = _scrollController.position.maxScrollExtent;
       while (_currentMouseDx != null) {
+        print('_setupCursorTrackerDx');
         if (_currentMouseDx == double.infinity) {
           await _scrollController.animateTo(_scrollController.offset,
               duration: Duration.zero, curve: Curves.linear);
           _isAnimating = false;
-          return;
+          break;
         }
         _isAnimating = true;
         if (_currentMouseDx! <= _scrollZoneWidth()) {
           await _scrollController.animateTo(_scrollController.offset - 100,
               duration: const Duration(milliseconds: 100),
               curve: Curves.linear);
+          if (scrollOffset <= topOffset) {
+            _isAnimating = false;
+            break;
+          }
         } else if (_currentMouseDx! >= _maxWidth - _scrollZoneWidth() &&
             _currentMouseDx! < double.infinity) {
           await _scrollController.animateTo(_scrollController.offset + 100,
               duration: const Duration(milliseconds: 100),
               curve: Curves.linear);
+          if (scrollOffset >= bottomOffset) {
+            _isAnimating = false;
+            break;
+          }
         } else {
           await _scrollController.animateTo(_scrollController.offset,
               duration: Duration.zero, curve: Curves.linear);
           _isAnimating = false;
-          return;
+          break;
         }
       }
     }

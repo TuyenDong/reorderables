@@ -109,7 +109,7 @@ class _RowExampleState extends State<RowExample> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 ignorePrimaryScrollController: true,
                 controller: controller,
-                padding: EdgeInsets.only(top: 20),
+                padding: EdgeInsets.only(left: 10, right: 10),
                 children: List.generate(_columns.length, (index) {
                   final value = _columns[index];
                   return Container(
@@ -118,7 +118,7 @@ class _RowExampleState extends State<RowExample> {
                     padding: EdgeInsets.all(10),
                     color: index % 2 == 0 ? Colors.red : Colors.green,
                     width: 100,
-                    margin: EdgeInsets.only(right: 10, top: 20),
+                    margin: EdgeInsets.only(right: 10),
                     child: Image.asset(
                       value,
                       fit: BoxFit.cover,
@@ -129,8 +129,8 @@ class _RowExampleState extends State<RowExample> {
                   height: 100,
                   padding: EdgeInsets.all(10),
                   color: Colors.green,
+                  alignment: Alignment.center,
                   width: 100,
-                  margin: EdgeInsets.only(right: 10, top: 20),
                   child: Text('Edit'),
                 ),
                 onReorder: _onReorder,
