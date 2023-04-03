@@ -146,13 +146,6 @@ class _RowExampleState extends State<RowExample> {
                 //     child: Image.asset(value, fit: BoxFit.cover,),
                 //   );
                 // },
-                oneClickDraggable: true,
-                // reorderAnimationDuration: Duration(milliseconds: 1000),
-                onNoReorder: (int index) {
-                  //this callback is optional
-                  debugPrint(
-                      '${DateTime.now().toString().substring(5, 22)} reorder cancelled. index:$index');
-                },
               ),
             ),
           ),

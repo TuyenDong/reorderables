@@ -2,13 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import './column_example1.dart';
-import './column_example2.dart';
-import './nested_wrap_example.dart';
 import './row_example.dart';
-import './sliver_example.dart';
-import './table_example.dart';
-import './wrap_example.dart';
 import 'column_example.dart';
 
 void main() => runApp(MyApp());
@@ -30,7 +24,6 @@ class NoThumbScrollBehavior extends ScrollBehavior {
   Set<PointerDeviceKind> get dragDevices => {
         PointerDeviceKind.touch,
         PointerDeviceKind.mouse,
-        PointerDeviceKind.stylus,
       };
 }
 
@@ -46,12 +39,6 @@ class _MyHomePageState extends State<MyHomePage> {
   final List<Widget> _examples = [
     ColumnExample(),
     RowExample(),
-    TableExample(),
-    WrapExample(),
-    NestedWrapExample(),
-    ColumnExample1(),
-    ColumnExample2(),
-    SliverExample(),
   ];
   final _bottomNavigationColor = Colors.blue;
 
@@ -75,31 +62,6 @@ class _MyHomePageState extends State<MyHomePage> {
               icon: Icon(Icons.more_vert, color: _bottomNavigationColor),
               tooltip: "ReorderableColumn",
               label: "Column"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.grid_on, color: _bottomNavigationColor),
-              tooltip: "ReorderableTable",
-              label: "Table"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.apps, color: _bottomNavigationColor),
-              tooltip: "ReorderableWrap",
-              label: "Wrap"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.view_quilt, color: _bottomNavigationColor),
-              tooltip: 'Nested ReroderableWrap',
-              label: "Nested"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.more_vert, color: _bottomNavigationColor),
-              tooltip: "ReorderableColumn 1",
-              label: "Column 1"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.more_vert, color: _bottomNavigationColor),
-              tooltip: "ReroderableColumn 2",
-              label: "Column 2"),
-          BottomNavigationBarItem(
-              icon:
-                  Icon(Icons.calendar_view_day, color: _bottomNavigationColor),
-              tooltip: "ReroderableSliverList",
-              label: "SliverList"),
         ],
         onTap: (int index) {
           setState(() {

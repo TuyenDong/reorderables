@@ -55,8 +55,6 @@ class ReorderableFlex extends StatefulWidget {
     this.onNoReorder,
     this.onReorderStarted,
     this.scrollController,
-    this.needsLongPressDraggable = true,
-    this.oneClickDraggable = false,
     this.draggingWidgetOpacity = 0.2,
     this.reorderAnimationDuration,
     this.scrollAnimationDuration,
@@ -117,8 +115,6 @@ class ReorderableFlex extends StatefulWidget {
 
   final MainAxisAlignment mainAxisAlignment;
 
-  final bool needsLongPressDraggable;
-  final bool oneClickDraggable;
   final double draggingWidgetOpacity;
 
   final Duration? reorderAnimationDuration;
@@ -166,8 +162,6 @@ class _ReorderableFlexState extends State<ReorderableFlex> {
           buildDraggableFeedback: widget.buildDraggableFeedback,
           mainAxisAlignment: widget.mainAxisAlignment,
           scrollController: widget.scrollController,
-          needsLongPressDraggable: widget.needsLongPressDraggable,
-          oneClickDraggable: widget.oneClickDraggable,
           draggingWidgetOpacity: widget.draggingWidgetOpacity,
           physics: widget.physics,
           controller: widget.controller,
@@ -208,8 +202,6 @@ class _ReorderableFlexContent extends StatefulWidget {
     required this.onReorderStarted,
     required this.mainAxisAlignment,
     required this.scrollController,
-    required this.needsLongPressDraggable,
-    required this.oneClickDraggable,
     required this.draggingWidgetOpacity,
     required this.buildItemsContainer,
     required this.buildDraggableFeedback,
@@ -236,8 +228,6 @@ class _ReorderableFlexContent extends StatefulWidget {
   final Widget Function(BuildContext context, int index)? draggedItemBuilder;
 
   final MainAxisAlignment mainAxisAlignment;
-  final bool needsLongPressDraggable;
-  final bool oneClickDraggable;
   final double draggingWidgetOpacity;
   final Duration reorderAnimationDuration;
   final Duration scrollAnimationDuration;
@@ -508,7 +498,7 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
     void onDragEnded() {
 //      reorder(_dragStartIndex, _currentIndex);
       if (widget.controller?.notifyDrag != null) {
-        widget.controller?.notifyDrag!(false);
+        widget.controller?.notifyDrag(false);
       }
 
       setState(() {
@@ -522,7 +512,7 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
 
     void onDragStarted() {
       if (widget.controller?.notifyDrag != null) {
-        widget.controller?.notifyDrag!(true);
+        widget.controller?.notifyDrag(true);
       }
       setState(() {
         _draggingWidget =
@@ -648,137 +638,57 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
       if (!isReorderable) {
         child = toWrap;
       } else {
-        if (widget.oneClickDraggable) {
-          child = DraggableByMouse<int>(
-            maxSimultaneousDrags: 1,
-            axis: widget.direction,
-            data: index,
-            ignoringFeedbackSemantics: false,
-            // item đang hiệu ứng di chuyển không click đc vì là transform
-            feedback: feedbackBuilder,
-            currentDrag: _currentDrag,
-            indexDraging: _indexDraging,
-            // feedback: Opacity(
-            //   opacity: 0,
-            //   child: Container(
-            //     width: 0,
-            //     height: 0,
-            //     child: toWrap,
-            //   ),
-            // ),
-            onChange: (value, indexV) {
-              setState(() {
-                _currentDrag = value;
-                _indexDraging = indexV;
-              });
-            },
-            // Wrap toWrapWithSemantics with a widget that supports HitTestBehavior
-            // to make sure the whole toWrapWithSemantics responds to pointer events, i.e. dragging
-            child: MetaData(
-              child: toWrapWithSemantics,
-              behavior: HitTestBehavior.opaque,
-            ),
-            childWhenDragging: IgnorePointer(
-              ignoring: true,
-              child: Opacity(
-                opacity: 0,
-                child: Container(
-                  width: 0,
-                  height: 0,
-                  child: toWrap,
-                ),
+        child = DraggableByMouse<int>(
+          maxSimultaneousDrags: 1,
+          axis: widget.direction,
+          data: index,
+          ignoringFeedbackSemantics: false,
+          // item đang hiệu ứng di chuyển không click đc vì là transform
+          feedback: feedbackBuilder,
+          currentDrag: _currentDrag,
+          indexDraging: _indexDraging,
+          // feedback: Opacity(
+          //   opacity: 0,
+          //   child: Container(
+          //     width: 0,
+          //     height: 0,
+          //     child: toWrap,
+          //   ),
+          // ),
+          onChange: (value, indexV) {
+            setState(() {
+              _currentDrag = value;
+              _indexDraging = indexV;
+            });
+          },
+          // Wrap toWrapWithSemantics with a widget that supports HitTestBehavior
+          // to make sure the whole toWrapWithSemantics responds to pointer events, i.e. dragging
+          child: MetaData(
+            child: toWrapWithSemantics,
+            behavior: HitTestBehavior.opaque,
+          ),
+          childWhenDragging: IgnorePointer(
+            ignoring: true,
+            child: Opacity(
+              opacity: 0,
+              child: Container(
+                width: 0,
+                height: 0,
+                child: toWrap,
               ),
             ),
-            onDragStarted: onDragStarted,
-            // dragAnchorStrategy: childDragAnchorStrategy,
-            // When the drag ends inside a DragTarget widget, the drag
-            // succeeds, and we reorder the widget into position appropriately.
-            onDragCompleted: onDragEnded,
-            // When the drag does not end inside a DragTarget widget, the
-            // drag fails, but we still reorder the widget to the last position it
-            // had been dragged to.
-            onDraggableCanceled: (Velocity velocity, Offset offset) =>
-                onDragEnded(),
-          );
-        } else {
-          child = widget.needsLongPressDraggable
-              ? LongPressDraggable<int>(
-                  maxSimultaneousDrags: 1,
-                  axis: widget.direction,
-                  data: index,
-                  ignoringFeedbackSemantics: false,
-                  //        feedback: Container(
-                  //          alignment: Alignment.topLeft,
-                  //          // These constraints will limit the cross axis of the drawn widget.
-                  //          constraints: constraints,
-                  //          child: Material(
-                  //            elevation: 6.0,
-                  //            child: IntrinsicWidth(child: toWrapWithSemantics),
-                  //          ),
-                  //        ),
-                  feedback: feedbackBuilder,
-                  //        feedback: Transform(
-                  //          transform: new Matrix4.rotationZ(0),
-                  //          alignment: FractionalOffset.topLeft,
-                  //          child: Material(
-                  //            child: Card(child: ConstrainedBox(constraints: BoxConstraints.tightFor(width: 100), child: toWrapWithSemantics)),
-                  //            elevation: 6.0,
-                  //            color: Colors.transparent,
-                  //            borderRadius: BorderRadius.zero,
-                  //          ),
-                  //        ),
-                  // Wrap toWrapWithSemantics with a widget that supports HitTestBehavior
-                  // to make sure the whole toWrapWithSemantics responds to pointer events, i.e. dragging
-                  child: MetaData(
-                      child: toWrapWithSemantics,
-                      behavior: HitTestBehavior.opaque),
-                  //toWrapWithSemantics,//_dragging == toWrap.key ? const SizedBox() : toWrapWithSemantics,
-                  childWhenDragging: IgnorePointer(
-                      ignoring: true,
-                      child: Opacity(
-                          opacity: 0,
-                          child:
-                              Container(width: 0, height: 0, child: toWrap))),
-                  onDragStarted: onDragStarted,
-                  // dragAnchorStrategy: childDragAnchorStrategy,
-                  // When the drag ends inside a DragTarget widget, the drag
-                  // succeeds, and we reorder the widget into position appropriately.
-                  onDragCompleted: onDragEnded,
-                  // When the drag does not end inside a DragTarget widget, the
-                  // drag fails, but we still reorder the widget to the last position it
-                  // had been dragged to.
-                  onDraggableCanceled: (Velocity velocity, Offset offset) =>
-                      onDragEnded(),
-                )
-              : Draggable<int>(
-                  maxSimultaneousDrags: 1,
-                  axis: widget.direction,
-                  data: index,
-                  ignoringFeedbackSemantics: false,
-                  feedback: feedbackBuilder,
-                  // Wrap toWrapWithSemantics with a widget that supports HitTestBehavior
-                  // to make sure the whole toWrapWithSemantics responds to pointer events, i.e. dragging
-                  child: MetaData(
-                      child: toWrapWithSemantics,
-                      behavior: HitTestBehavior.opaque),
-                  childWhenDragging: IgnorePointer(
-                      ignoring: true,
-                      child: Opacity(
-                          opacity: 0,
-                          child:
-                              Container(width: 0, height: 0, child: toWrap))),
-                  onDragStarted: onDragStarted,
-                  // dragAnchorStrategy: childDragAnchorStrategy,
-                  // When the drag ends inside a DragTarget widget, the drag
-                  // succeeds, and we reorder the widget into position appropriately.
-                  onDragCompleted: onDragEnded,
-                  // When the drag does not end inside a DragTarget widget, the
-                  // drag fails, but we still reorder the widget to the last position it
-                  // had been dragged to.
-                  onDraggableCanceled: (Velocity velocity, Offset offset) =>
-                      onDragEnded(),
-                );
-        }
+          ),
+          onDragStarted: onDragStarted,
+          // dragAnchorStrategy: childDragAnchorStrategy,
+          // When the drag ends inside a DragTarget widget, the drag
+          // succeeds, and we reorder the widget into position appropriately.
+          onDragCompleted: onDragEnded,
+          // When the drag does not end inside a DragTarget widget, the
+          // drag fails, but we still reorder the widget to the last position it
+          // had been dragged to.
+          onDraggableCanceled: (Velocity velocity, Offset offset) =>
+              onDragEnded(),
+        );
       }
 
       // The target for dropping at the end of the list doesn't need to be
@@ -825,77 +735,41 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
 
     // We wrap the drag target in a Builder so that we can scroll to its specific context.
     return Builder(builder: (BuildContext context) {
-      Widget dragTarget = widget.oneClickDraggable
-          ? DragTargetMouse<int>(
-              builder: buildDragTarget,
-              onWillAccept: (int? toAccept) {
-                if (_moveByKey) {
-                  _scrollTo(context);
-                  _moveByKey = false;
-                }
-                bool willAccept =
-                    _dragStartIndex == toAccept && toAccept != index;
+      Widget dragTarget = DragTargetMouse<int>(
+        builder: buildDragTarget,
+        onWillAccept: (int? toAccept) {
+          if (_moveByKey) {
+            _scrollTo(context);
+            _moveByKey = false;
+          }
+          bool willAccept = _dragStartIndex == toAccept && toAccept != index;
 
-                setState(() {
-                  if (willAccept) {
-                    int shiftedIndex = index;
-                    if (index == _dragStartIndex) {
-                      shiftedIndex = _ghostIndex;
-                    } else if (index > _dragStartIndex &&
-                        index <= _ghostIndex) {
-                      shiftedIndex--;
-                    } else if (index < _dragStartIndex &&
-                        index >= _ghostIndex) {
-                      shiftedIndex++;
-                    }
-                    _nextIndex = shiftedIndex;
-                  } else {
-                    _nextIndex = index;
-                  }
+          setState(() {
+            if (willAccept) {
+              int shiftedIndex = index;
+              if (index == _dragStartIndex) {
+                shiftedIndex = _ghostIndex;
+              } else if (index > _dragStartIndex && index <= _ghostIndex) {
+                shiftedIndex--;
+              } else if (index < _dragStartIndex && index >= _ghostIndex) {
+                shiftedIndex++;
+              }
+              _nextIndex = shiftedIndex;
+            } else {
+              _nextIndex = index;
+            }
+            if (widget.controller?.onDragged != null) {
+              widget.controller?.onDragged!(_nextIndex);
+            }
+            _requestAnimationToNextIndex(isAcceptingNewTarget: true);
+          });
 
-                  _requestAnimationToNextIndex(isAcceptingNewTarget: true);
-                });
-
-                // If the target is not the original starting point, then we will accept the drop.
-                return willAccept; //_dragging == toAccept && toAccept != toWrap.key;
-              },
-              onAccept: (int accepted) {},
-              onLeave: (Object? leaving) {},
-            )
-          : DragTarget<int>(
-              builder: buildDragTarget,
-              onWillAccept: (int? toAccept) {
-                bool willAccept =
-                    _dragStartIndex == toAccept && toAccept != index;
-//          debugPrint('${DateTime.now().toString().substring(5, 22)} reorderable_flex.dart(609) $this._wrap: '
-//            'onWillAccept: toAccept:$toAccept return:$willAccept _nextIndex:$_nextIndex index:$index _currentIndex:$_currentIndex _dragStartIndex:$_dragStartIndex');
-
-                setState(() {
-                  if (willAccept) {
-                    int shiftedIndex = index;
-                    if (index == _dragStartIndex) {
-                      shiftedIndex = _ghostIndex;
-                    } else if (index > _dragStartIndex &&
-                        index <= _ghostIndex) {
-                      shiftedIndex--;
-                    } else if (index < _dragStartIndex &&
-                        index >= _ghostIndex) {
-                      shiftedIndex++;
-                    }
-                    _nextIndex = shiftedIndex;
-                  } else {
-                    _nextIndex = index;
-                  }
-
-                  _requestAnimationToNextIndex(isAcceptingNewTarget: true);
-                });
-                _scrollTo(context);
-                // If the target is not the original starting point, then we will accept the drop.
-                return willAccept; //_dragging == toAccept && toAccept != toWrap.key;
-              },
-              onAccept: (int accepted) {},
-              onLeave: (Object? leaving) {},
-            );
+          // If the target is not the original starting point, then we will accept the drop.
+          return willAccept; //_dragging == toAccept && toAccept != toWrap.key;
+        },
+        onAccept: (int accepted) {},
+        onLeave: (Object? leaving) {},
+      );
 
       dragTarget = KeyedSubtree(key: keyIndexGlobalKey, child: dragTarget);
 
@@ -1026,68 +900,47 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
 //        controller: _scrollController,
 //      );
 
-    if (widget.oneClickDraggable) {
-      if (widget.scrollController != null &&
-          PrimaryScrollController.maybeOf(context) == null) {
-        return RawKeyboardListener(
-          autofocus: true,
-          focusNode: _forcus,
-          onKey: _onKey,
-          child: MouseRegion(
-            onHover: _onHover,
-            onExit: _onExit,
-            child: LayoutBuilder(builder: (context, constraint) {
-              _maxHeight = constraint.maxHeight;
-              _maxWidth = constraint.maxWidth;
-              return (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
-                  context, widget.direction, wrappedChildren);
-            }),
-          ),
-        );
-      } else {
-        return RawKeyboardListener(
-          autofocus: true,
-          focusNode: _forcus,
-          onKey: _onKey,
-          child: MouseRegion(
-            onHover: _onHover,
-            onExit: _onExit,
-            child: LayoutBuilder(builder: (context, constraint) {
-              _maxHeight = constraint.maxHeight;
-              _maxWidth = constraint.maxWidth;
-              return SingleChildScrollView(
-                //      key: _contentKey,
-                scrollDirection: widget.scrollDirection,
-                physics: NeverScrollableScrollPhysics(),
-                child:
-                    (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
-                        context, widget.direction, wrappedChildren),
-                padding: widget.padding,
-                controller: _scrollController,
-              );
-            }),
-          ),
-        );
-      }
-    }
-
     if (widget.scrollController != null &&
         PrimaryScrollController.maybeOf(context) == null) {
-      return (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
-          context, widget.direction, wrappedChildren);
+      return RawKeyboardListener(
+        autofocus: true,
+        focusNode: _forcus,
+        onKey: _onKey,
+        child: MouseRegion(
+          onHover: _onHover,
+          onExit: _onExit,
+          child: LayoutBuilder(builder: (context, constraint) {
+            _maxHeight = constraint.maxHeight;
+            _maxWidth = constraint.maxWidth;
+            return (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
+                context, widget.direction, wrappedChildren);
+          }),
+        ),
+      );
     } else {
-      return SingleChildScrollView(
-        //      key: _contentKey,
-        scrollDirection: widget.scrollDirection,
-        physics: widget.physics ?? NeverScrollableScrollPhysics(),
-        child: (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
-            context, widget.direction, wrappedChildren),
-        padding: widget.padding,
-        controller: _scrollController,
+      return RawKeyboardListener(
+        autofocus: true,
+        focusNode: _forcus,
+        onKey: _onKey,
+        child: MouseRegion(
+          onHover: _onHover,
+          onExit: _onExit,
+          child: LayoutBuilder(builder: (context, constraint) {
+            _maxHeight = constraint.maxHeight;
+            _maxWidth = constraint.maxWidth;
+            return SingleChildScrollView(
+              //      key: _contentKey,
+              scrollDirection: widget.scrollDirection,
+              physics: NeverScrollableScrollPhysics(),
+              child: (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
+                  context, widget.direction, wrappedChildren),
+              padding: widget.padding,
+              controller: _scrollController,
+            );
+          }),
+        ),
       );
     }
-
-//    });
   }
 
   bool _moveByKey = false;
@@ -1303,8 +1156,6 @@ class ReorderableRow extends ReorderableFlex {
     NoReorderCallback? onNoReorder,
     ReorderStartedCallback? onReorderStarted,
     ScrollController? scrollController,
-    bool needsLongPressDraggable = true,
-    bool oneClickDraggable = false,
     ScrollPhysics? physics,
     double draggingWidgetOpacity = 0.2,
     Duration? reorderAnimationDuration,
@@ -1339,9 +1190,7 @@ class ReorderableRow extends ReorderableFlex {
             buildDraggableFeedback: buildDraggableFeedback,
             mainAxisAlignment: mainAxisAlignment,
             scrollController: scrollController,
-            needsLongPressDraggable: needsLongPressDraggable,
             draggingWidgetOpacity: draggingWidgetOpacity,
-            oneClickDraggable: oneClickDraggable,
             reorderAnimationDuration: reorderAnimationDuration,
             scrollAnimationDuration: scrollAnimationDuration,
             physics: physics,
@@ -1426,11 +1275,9 @@ class ReorderableColumn extends ReorderableFlex {
             buildDraggableFeedback: buildDraggableFeedback,
             mainAxisAlignment: mainAxisAlignment,
             scrollController: scrollController,
-            needsLongPressDraggable: needsLongPressDraggable,
             draggingWidgetOpacity: draggingWidgetOpacity,
             reorderAnimationDuration: reorderAnimationDuration,
             scrollAnimationDuration: scrollAnimationDuration,
-            oneClickDraggable: oneClickDraggable,
             physics: physics,
             controller: controller,
             draggedItemBuilder: draggedItemBuilder,
@@ -1460,4 +1307,6 @@ class ReorderableController {
       element(value);
     });
   }
+
+  ValueChanged<int?>? onDragged;
 }

@@ -9,7 +9,7 @@ class ColumnExample extends StatefulWidget {
 
 class _ColumnExampleState extends State<ColumnExample> {
   late List<String> _columns;
-  final ReorderableController controller = ReorderableController();
+  final _controller = ReorderableController();
 
   @override
   void initState() {
@@ -21,72 +21,8 @@ class _ColumnExampleState extends State<ColumnExample> {
       'assets/river1.jpg',
       'assets/river2.jpg',
       'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
-      'assets/river1.jpg',
-      'assets/river2.jpg',
-      'assets/river3.jpg',
     ];
+    _controller.onDragged = _onDragged;
   }
 
   @override
@@ -112,7 +48,7 @@ class _ColumnExampleState extends State<ColumnExample> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 ignorePrimaryScrollController: true,
                 padding: EdgeInsets.only(top: 20),
-                controller: controller,
+                controller: _controller,
                 children: List.generate(_columns.length, (index) {
                   final value = _columns[index];
                   return Container(
@@ -150,11 +86,6 @@ class _ColumnExampleState extends State<ColumnExample> {
                 // },
                 oneClickDraggable: true,
                 // reorderAnimationDuration: Duration(milliseconds: 1000),
-                onNoReorder: (int index) {
-                  //this callback is optional
-                  debugPrint(
-                      '${DateTime.now().toString().substring(5, 22)} reorder cancelled. index:$index');
-                },
               ),
             ),
           ),
@@ -171,9 +102,11 @@ class _ColumnExampleState extends State<ColumnExample> {
   }
 
   void _onPress() {
-    controller.stopReorder();
+    _controller.stopReorder();
   }
 
-  void _notifyDrag(bool isDraging) {
+  void _onDragged(int? value) {
+    debugPrint('_onDragged $value top ${value == 0} '
+        'bottom ${value == _columns.length - 1}');
   }
 }
