@@ -1439,5 +1439,25 @@ class ReorderableColumn extends ReorderableFlex {
 
 class ReorderableController {
   late void Function() stopReorder;
-  void Function(bool isDraging)? notifyDrag;
+  List<ValueChanged<bool>> _listeners = [];
+  bool isDraging = false;
+
+  void addListener(ValueChanged<bool> value) {
+    if (!_listeners.contains(value)) {
+      _listeners.add(value);
+    }
+  }
+
+  void removeListener(ValueChanged<bool> value) {
+    if (_listeners.contains(value)) {
+      _listeners.remove(value);
+    }
+  }
+
+  void notifyDrag(bool value) {
+    isDraging = value;
+    _listeners.forEach((element) {
+      element(value);
+    });
+  }
 }

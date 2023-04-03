@@ -14,7 +14,6 @@ class _RowExampleState extends State<RowExample> {
   @override
   void initState() {
     super.initState();
-    controller.notifyDrag = _notifyDrag;
     _columns = [
       'assets/river1.jpg',
       'assets/river2.jpg',
@@ -172,8 +171,5 @@ class _RowExampleState extends State<RowExample> {
   void _onPress() {
     controller.stopReorder();
   }
-
-  void _notifyDrag(bool isDraging) {
-    debugPrint('isDraging $isDraging');
-  }
+  
 }
