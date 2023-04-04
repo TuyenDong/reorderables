@@ -162,8 +162,11 @@ class DraggableByMouse<T extends Object> extends StatefulWidget {
     required this.child,
     required this.feedback,
     this.data,
+    this.dataMax,
     this.axis,
     this.childWhenDragging,
+    this.extendItemTop,
+    this.extendItemBottom,
     this.feedbackOffset = Offset.zero,
     this.dragAnchorStrategy = childDragAnchorStrategy,
     this.affinity,
@@ -187,6 +190,7 @@ class DraggableByMouse<T extends Object> extends StatefulWidget {
 
   /// The data that will be dropped by this draggable.
   final T? data;
+  final T? dataMax;
 
   /// The [Axis] to restrict this draggable's movement, if specified.
   ///
@@ -227,6 +231,8 @@ class DraggableByMouse<T extends Object> extends StatefulWidget {
   /// To limit the number of simultaneous drags on multitouch devices, see
   /// [maxSimultaneousDrags].
   final Widget? childWhenDragging;
+  final Widget? extendItemTop;
+  final Widget? extendItemBottom;
 
   /// The widget to show under the pointer when a drag is under way.
   ///
@@ -418,11 +424,14 @@ class _DraggableByMouseState<T extends Object>
       overlayState: Overlay.of(context,
           debugRequiredFor: widget, rootOverlay: widget.rootOverlay),
       data: widget.data,
+      dataMax: widget.dataMax,
       axis: widget.axis,
       size: (context.findRenderObject()! as RenderBox).size,
       initialPosition: position,
       dragStartPoint: dragStartPoint,
       feedback: widget.feedback,
+      extendItemTop: widget.extendItemTop,
+      extendItemBottom: widget.extendItemBottom,
       feedbackOffset: widget.feedbackOffset,
       ignoringFeedbackSemantics: widget.ignoringFeedbackSemantics,
       ignoringFeedbackPointer: widget.ignoringFeedbackPointer,
@@ -465,7 +474,7 @@ class _DraggableByMouseState<T extends Object>
     if (canDrag) {
       return MouseRegion(
         onEnter: (event) {
-          widget.currentDrag!.updatePos(context);
+          widget.currentDrag!.updatePos(context, widget.data);
         },
         child: showChild ? widget.child : widget.childWhenDragging,
       );
@@ -695,26 +704,35 @@ class DragAvatar<T extends Object> {
   DragAvatar({
     required this.overlayState,
     this.data,
+    this.dataMax,
     this.axis,
     required this.size,
     required Offset initialPosition,
     this.dragStartPoint = Offset.zero,
     this.feedback,
+    this.extendItemTop,
+    this.extendItemBottom,
     this.feedbackOffset = Offset.zero,
     this.onDragEnd,
     required this.ignoringFeedbackSemantics,
     required this.ignoringFeedbackPointer,
-  }) : _position = initialPosition {
+  })  : _position = initialPosition,
+        _prePosition = initialPosition {
     _entry = OverlayEntry(builder: _build);
     overlayState.insert(_entry!);
     _updateDrag(initialPosition);
   }
 
   final T? data;
+  final T? dataMax;
+  T? _current;
+  T? _currentByKey;
   final Axis? axis;
   final Size size;
   final Offset dragStartPoint;
   final Widget? feedback;
+  final Widget? extendItemTop;
+  final Widget? extendItemBottom;
   final Offset feedbackOffset;
   final _OnDragEnd? onDragEnd;
   final OverlayState overlayState;
@@ -725,13 +743,16 @@ class DragAvatar<T extends Object> {
   final List<_DragTargetMouseState<Object>> _enteredTargets =
       <_DragTargetMouseState<Object>>[];
   Offset _position;
+  Offset _prePosition;
   Offset? _lastOffset;
   OverlayEntry? _entry;
+  bool _isDraging = false;
 
-  // cần cập nhật chính xác vị trí của item mới
-  void update(Offset delta) {
-    _position = delta;
-    // _position += _restrictAxis(delta);
+  // update new position of draging item
+  // bool get _isDrapUp => _prePosition.dy > _position.dy;
+  void _update(Offset newPosistion) {
+    _prePosition = _position;
+    _position = newPosistion;
     _updateDrag(_position);
   }
 
@@ -778,6 +799,7 @@ class DragAvatar<T extends Object> {
     }
 
     _activeTarget = newTarget;
+    _isDraging = false;
   }
 
   Iterable<_DragTargetMouseState<Object>> _getDragTargets(
@@ -823,15 +845,113 @@ class DragAvatar<T extends Object> {
 
   // cần cập nhật chính xác vị trí của item mới
   Widget _build(BuildContext context) {
+    if (horizontal) {
+      return Positioned(
+        left: horizontal ? _position.dx : _position.dx + 50,
+        top: horizontal ? _position.dy - 50 : _position.dy,
+        child: IgnorePointer(
+          ignoring: ignoringFeedbackPointer,
+          ignoringSemantics: ignoringFeedbackSemantics,
+          child: feedback,
+        ),
+      );
+    }
     return Positioned(
       left: horizontal ? _position.dx : _position.dx + 50,
       top: horizontal ? _position.dy - 50 : _position.dy,
       child: IgnorePointer(
         ignoring: ignoringFeedbackPointer,
         ignoringSemantics: ignoringFeedbackSemantics,
-        child: feedback,
+        child: Stack(
+          children: [
+            if (feedback != null) feedback!,
+            if (_extendItemTop != null) _extendItemTop!,
+            if (_extendItemBottom != null) _extendItemBottom!
+          ],
+        ),
       ),
     );
+  }
+
+  bool get _isDrapUp => _prePosition.dy > _position.dy;
+
+  //  2 case:
+  //  1. handle by mouse => check _current index
+  //  2. handle by keyboard arrow => check _currentByKey
+  Widget? get _extendItemTop {
+    if (extendItemTop != null) {
+      if (_currentByKey != null) {
+        if (_currentByKey != 0) {
+          return extendItemTop;
+        }
+      } else {
+        if (data == 0) {
+          if (_current == null || _current == 0) {
+            return null;
+          } else if (_current == 1 && !_isDrapUp) {
+            return extendItemTop;
+          } else if (_current != 1) {
+            return extendItemTop;
+          }
+        } else if (data != 0) {
+          if (_current == 0) {
+            if (_isDrapUp) {
+              return null;
+            }
+            return extendItemTop;
+          }
+          return extendItemTop;
+        } else if (data == dataMax) {
+          if (_current == null) {
+            return extendItemTop;
+          } else if (_current == ((dataMax! as int) - 1) && _isDrapUp) {
+            return extendItemTop;
+          } else if (_current != ((dataMax! as int) - 1)) {
+            return extendItemTop;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  //  2 case:
+  //  1. handle by mouse => check _current index
+  //  2. handle by keyboard arrow => check _currentByKey
+  Widget? get _extendItemBottom {
+    if (extendItemBottom != null) {
+      if (_currentByKey != null) {
+        if (_currentByKey != dataMax) {
+          return extendItemBottom;
+        }
+      } else {
+        if (data == dataMax) {
+          if (_current == null) {
+            return null;
+          } else if (_current == ((dataMax! as int) - 1) && !_isDrapUp) {
+            return null;
+          } else {
+            return extendItemBottom;
+          }
+        } else if (data != 0) {
+          if (_current == dataMax && !_isDrapUp) {
+            return null;
+          } else if (_current == 0) {
+            return extendItemBottom;
+          }
+          return extendItemBottom;
+        } else if (data == 0) {
+          if (_current == null) {
+            return extendItemBottom;
+          } else if (_current == dataMax && _isDrapUp) {
+            return extendItemBottom;
+          } else if (_current != dataMax) {
+            return extendItemBottom;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   Velocity _restrictVelocityAxis(Velocity velocity) {
@@ -855,41 +975,81 @@ class DragAvatar<T extends Object> {
     return Offset(0.0, offset.dy);
   }
 
-  void updatePos(BuildContext context) {
-    final RenderBox box = context.findRenderObject()! as RenderBox;
-    final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
-    update(overlayTopLeft);
+  // handle update new positon by mouse
+  // reset _currentByKey
+  // update _current = current index
+  void updatePos(BuildContext context, T? pos) {
+    if (!_isDraging) {
+      _isDraging = true;
+      _current = pos;
+      _currentByKey = null;
+      debugPrint('_current $_current');
+      final RenderBox box = context.findRenderObject()! as RenderBox;
+      final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
+      _update(overlayTopLeft);
+    }
   }
 
+//handle keyboard arrowDown
   void onNext(double max) {
     if (horizontal) {
       if ((_position.dx + size.width * 2) <= max) {
-        update(Offset(_position.dx + size.width, _position.dy));
+        if (!_isDraging) {
+          _isDraging = true;
+          _update(Offset(_position.dx + size.width, _position.dy));
+        }
       }
     } else {
       if ((_position.dy + size.height * 2) <= max) {
-        update(Offset(_position.dx, _position.dy + size.height));
+        if (!_isDraging) {
+          _isDraging = true;
+          if (_currentByKey == null) {
+            _currentByKey = ((data as int) + 1) as T?;
+          } else {
+            _currentByKey = ((_currentByKey as int) + 1) as T?;
+          }
+          debugPrint('_current $_currentByKey');
+          final newPos = Offset(_position.dx, _position.dy + size.height);
+          _update(newPos);
+        }
       }
     }
   }
 
-  void onPre() {
+//handle keyboardarrowUp
+  void onPre(BuildContext context) {
     if (horizontal) {
       if (_position.dx >= size.width) {
-        update(Offset(_position.dx - size.width, _position.dy));
+        if (!_isDraging) {
+          _isDraging = true;
+          _update(Offset(_position.dx - size.width, _position.dy));
+        }
       }
     } else {
-      if (_position.dy >= size.height) {
-        update(Offset(_position.dx, _position.dy - size.height));
+      final RenderBox box = context.findRenderObject()! as RenderBox;
+      final Offset offsetParent = box.localToGlobal(Offset.zero);
+      if (_position.dy >= size.height && _position.dy > offsetParent.dy) {
+        if (!_isDraging) {
+          _isDraging = true;
+          if (_currentByKey == null) {
+            _currentByKey = ((data as int) - 1) as T?;
+          } else {
+            _currentByKey = ((_currentByKey as int) - 1) as T?;
+          }
+          debugPrint('_current $_currentByKey');
+          final newPos = Offset(_position.dx, _position.dy - size.height);
+          _update(newPos);
+        }
       }
     }
   }
 
+  // update position when auto scroll
   void updateOfset(double ofset) {
     if (horizontal) {
-      update(Offset(_position.dx - ofset, _position.dy));
+      _update(Offset(_position.dx - ofset, _position.dy));
     } else {
-      update(Offset(_position.dx, _position.dy - ofset));
+      _update(Offset(_position.dx, _position.dy - ofset));
     }
   }
 }

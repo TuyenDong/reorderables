@@ -44,6 +44,8 @@ class ReorderableFlex extends StatefulWidget {
     Key? key,
     this.header,
     this.footer,
+    this.extendItemTop,
+    this.extendItemBottom,
     required this.children,
     required this.onReorder,
     required this.direction,
@@ -88,6 +90,8 @@ class ReorderableFlex extends StatefulWidget {
   ///
   /// If null, no footer will appear at the bottom/right of the widget.
   final Widget? footer;
+  final Widget? extendItemTop;
+  final Widget? extendItemBottom;
 
   /// The widgets to display.
   final List<Widget> children;
@@ -158,6 +162,8 @@ class _ReorderableFlexState extends State<ReorderableFlex> {
           onNoReorder: widget.onNoReorder,
           onReorderStarted: widget.onReorderStarted,
           padding: widget.padding,
+          extendItemTop: widget.extendItemTop,
+          extendItemBottom: widget.extendItemBottom,
           buildItemsContainer: widget.buildItemsContainer,
           buildDraggableFeedback: widget.buildDraggableFeedback,
           mainAxisAlignment: widget.mainAxisAlignment,
@@ -194,6 +200,8 @@ class _ReorderableFlexContent extends StatefulWidget {
   const _ReorderableFlexContent({
     this.header,
     this.footer,
+    this.extendItemTop,
+    this.extendItemBottom,
     required this.children,
     required this.direction,
     required this.scrollDirection,
@@ -215,6 +223,8 @@ class _ReorderableFlexContent extends StatefulWidget {
 
   final Widget? header;
   final Widget? footer;
+  final Widget? extendItemTop;
+  final Widget? extendItemBottom;
   final List<Widget> children;
   final Axis direction;
   final Axis scrollDirection;
@@ -515,8 +525,10 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
         widget.controller?.notifyDrag(true);
       }
       setState(() {
-        _draggingWidget =
-            GestureDetector(onTap: stopReorder, child: draggedItem);
+        _draggingWidget = GestureDetector(
+          onTap: stopReorder,
+          child: draggedItem,
+        );
         _dragStartIndex = index;
         _ghostIndex = index;
         _currentIndex = index;
@@ -617,11 +629,8 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
       final Widget toWrapWithSemantics = wrapWithSemantics();
 
       Widget feedbackBuilder = Builder(builder: (BuildContext context) {
-//          RenderRepaintBoundary renderObject = _contentKey.currentContext.findRenderObject();
-//          BoxConstraints contentSizeConstraints = BoxConstraints.loose(renderObject.size);
-        BoxConstraints contentSizeConstraints = BoxConstraints.loose(
-            _draggingFeedbackSize!); //renderObject.constraints
-//          debugPrint('${DateTime.now().toString().substring(5, 22)} reorderable_flex.dart(515) $this.buildDragTarget: contentConstraints:$contentSizeConstraints _draggingFeedbackSize:$_draggingFeedbackSize');
+        BoxConstraints contentSizeConstraints =
+            BoxConstraints.loose(_draggingFeedbackSize!);
         return (widget.buildDraggableFeedback ?? defaultBuildDraggableFeedback)(
             context, contentSizeConstraints, draggedItem);
       });
@@ -642,19 +651,15 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
           maxSimultaneousDrags: 1,
           axis: widget.direction,
           data: index,
+          dataMax: widget.children.length - 1,
           ignoringFeedbackSemantics: false,
+          extendItemBottom: widget.extendItemBottom,
+          extendItemTop: widget.extendItemTop,
           // item đang hiệu ứng di chuyển không click đc vì là transform
           feedback: feedbackBuilder,
           currentDrag: _currentDrag,
           indexDraging: _indexDraging,
-          // feedback: Opacity(
-          //   opacity: 0,
-          //   child: Container(
-          //     width: 0,
-          //     height: 0,
-          //     child: toWrap,
-          //   ),
-          // ),
+          // context: context,
           onChange: (value, indexV) {
             setState(() {
               _currentDrag = value;
@@ -696,40 +701,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
       if (index >= widget.children.length) {
         child = toWrap;
       }
-
-//      // Determine the size of the drop area to show under the dragging widget.
-//      Widget spacing;
-//      switch (widget.direction) {
-//        case Axis.horizontal:
-//          spacing = SizedBox(width: _dropAreaExtent);
-//          break;
-//        case Axis.vertical:
-//        default:
-//          spacing = SizedBox(height: _dropAreaExtent);
-//          break;
-//      }
-
-//      // We open up a space under where the dragging widget currently is to
-//      // show it can be dropped.
-//      if (_currentIndex == index) {
-//        Widget entranceSpacing = SizeTransition(
-//          sizeFactor: _entranceController,
-//          axis: widget.direction,
-//          child: Row(children: [spacing, Text('eeeeeeeeeeeee $index')])
-//        );
-//
-//        return _buildContainerForScrollDirection(children: _currentIndex > _ghostIndex ? [child, entranceSpacing] : [entranceSpacing, child]);
-//      }
-//      // We close up the space under where the dragging widget previously was
-//      // with the ghostController animation.
-//      if (_ghostIndex == index) {
-//        Widget ghostSpacing = SizeTransition(
-//          sizeFactor: _ghostController,
-//          axis: widget.direction,
-//          child: Row(children: [spacing, Text('gggggggg $index')]),
-//        );
-//        return _buildContainerForScrollDirection(children: _currentIndex > _ghostIndex ? [child, ghostSpacing] : [ghostSpacing, child]);
-//      }
       return child;
     }
 
@@ -757,9 +728,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
               _nextIndex = shiftedIndex;
             } else {
               _nextIndex = index;
-            }
-            if (widget.controller?.onDragged != null) {
-              widget.controller?.onDragged!(_nextIndex);
             }
             _requestAnimationToNextIndex(isAcceptingNewTarget: true);
           });
@@ -794,9 +762,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
           shiftedIndex++;
         }
       }
-
-//      debugPrint('${DateTime.now().toString().substring(5, 22)} reorderable_flex.dart(659) $this._wrap: '
-//        'index:$index shiftedIndex:$shiftedIndex _nextIndex:$_nextIndex _currentIndex:$_currentIndex _ghostIndex:$_ghostIndex _dragStartIndex:$_dragStartIndex');
 
       if (shiftedIndex == _currentIndex || index == _ghostIndex) {
         Widget entranceSpacing = _makeAppearingWidget(spacing);
@@ -835,7 +800,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
                     : [dragTarget, ghostSpacing]);
           }
         } else {
-//          debugPrint('index:$index using _entranceController: spacing on top:${!(_dragStartIndex < _currentIndex)}');
           return _buildContainerForMainAxis(
               children: _dragStartIndex < _currentIndex
                   ? [dragTarget, entranceSpacing]
@@ -853,9 +817,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
 
   @override
   Widget build(BuildContext context) {
-//    assert(debugCheckHasMaterialLocalizations(context));
-    // We use the layout builder to constrain the cross-axis size of dragging child widgets.
-//    return LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
     final List<Widget> wrappedChildren = <Widget>[];
     if (widget.header != null) {
       wrappedChildren.add(widget.header!);
@@ -866,81 +827,38 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
     if (widget.footer != null) {
       wrappedChildren.add(widget.footer!);
     }
-//      const Key endWidgetKey = Key('DraggableList - End Widget');
-//      Widget finalDropArea;
-//      switch (widget.direction) {
-//        case Axis.horizontal:
-//          finalDropArea = SizedBox(
-//            key: endWidgetKey,
-//            width: _defaultDropAreaExtent,
-//            height: double.infinity,//constraints.maxHeight,
-//          );
-//          break;
-//        case Axis.vertical:
-//        default:
-//          finalDropArea = SizedBox(
-//            key: endWidgetKey,
-//            height: _defaultDropAreaExtent,
-//            width: double.infinity,//constraints.maxWidth,
-//          );
-//          break;
-//      }
-//      wrappedChildren.add(_wrap(
-//        finalDropArea,
-//        widget.children.length,
-//        constraints),
-//      );
 
-//      return _buildContainerForScrollDirection(children: wrappedChildren);
-
-//      return SingleChildScrollView(
-//        scrollDirection: widget.direction,
-//        child: _buildContainerForScrollDirection(children: wrappedChildren),
-//        padding: widget.padding,
-//        controller: _scrollController,
-//      );
+    late Widget child;
 
     if (widget.scrollController != null &&
         PrimaryScrollController.maybeOf(context) == null) {
-      return RawKeyboardListener(
-        autofocus: true,
-        focusNode: _forcus,
-        onKey: _onKey,
-        child: MouseRegion(
-          onHover: _onHover,
-          onExit: _onExit,
-          child: LayoutBuilder(builder: (context, constraint) {
-            _maxHeight = constraint.maxHeight;
-            _maxWidth = constraint.maxWidth;
-            return (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
-                context, widget.direction, wrappedChildren);
-          }),
-        ),
-      );
+      child = (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
+          context, widget.direction, wrappedChildren);
     } else {
-      return RawKeyboardListener(
-        autofocus: true,
-        focusNode: _forcus,
-        onKey: _onKey,
-        child: MouseRegion(
-          onHover: _onHover,
-          onExit: _onExit,
-          child: LayoutBuilder(builder: (context, constraint) {
-            _maxHeight = constraint.maxHeight;
-            _maxWidth = constraint.maxWidth;
-            return SingleChildScrollView(
-              //      key: _contentKey,
-              scrollDirection: widget.scrollDirection,
-              physics: NeverScrollableScrollPhysics(),
-              child: (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
-                  context, widget.direction, wrappedChildren),
-              padding: widget.padding,
-              controller: _scrollController,
-            );
-          }),
-        ),
+      child = SingleChildScrollView(
+        scrollDirection: widget.scrollDirection,
+        physics: NeverScrollableScrollPhysics(),
+        child: (widget.buildItemsContainer ?? defaultBuildItemsContainer)(
+            context, widget.direction, wrappedChildren),
+        padding: widget.padding,
+        controller: _scrollController,
       );
     }
+
+    return RawKeyboardListener(
+      autofocus: true,
+      focusNode: _forcus,
+      onKey: _onKey,
+      child: MouseRegion(
+        onHover: _onHover,
+        onExit: _onExit,
+        child: LayoutBuilder(builder: (context, constraint) {
+          _maxHeight = constraint.maxHeight;
+          _maxWidth = constraint.maxWidth;
+          return child;
+        }),
+      ),
+    );
   }
 
   bool _moveByKey = false;
@@ -953,13 +871,13 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
           final RenderBox box = context.findRenderObject()! as RenderBox;
           _currentDrag!.onNext(box.size.width);
         } else if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft)) {
-          _currentDrag!.onPre();
+          _currentDrag!.onPre(context);
         }
       } else {
         if (event.isKeyPressed(LogicalKeyboardKey.arrowDown)) {
           _currentDrag!.onNext(_maxHeight);
         } else if (event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {
-          _currentDrag!.onPre();
+          _currentDrag!.onPre(context);
         }
       }
     }
@@ -972,123 +890,96 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
 
   void _onHover(PointerHoverEvent event) {
     if (_scrollController.hasClients) {
+      final double scrollOffset = _scrollController.offset;
+      final double topOffset = _scrollController.position.minScrollExtent;
+      final double bottomOffset = _scrollController.position.maxScrollExtent;
+
       if (widget.direction == Axis.vertical) {
-        final dy = event.localPosition.dy;
-        _setupCursorTrackerDy(dy);
+        final dx = event.localPosition.dy;
+        final delta = event.delta.dy;
+        // delta < 0 => move left, delta > 0 move right
+        if (dx <= _scrollZoneHeight() &&
+            scrollOffset > topOffset &&
+            delta <= 0 &&
+            !_scrolling) {
+          _scrollToLeft();
+        } else if (dx >= _maxHeight - _scrollZoneHeight() &&
+            scrollOffset < bottomOffset &&
+            !_scrolling &&
+            delta >= 0) {
+          _scrollToRight();
+        } else {
+          _stopScroll();
+        }
       } else {
         final dx = event.localPosition.dx;
-        _setupCursorTrackerDx(dx);
+        final delta = event.delta.dx;
+        // delta < 0 => move left, delta > 0 move right
+        if (dx <= _scrollZoneWidth() &&
+            scrollOffset > topOffset &&
+            delta <= 0 &&
+            !_scrolling) {
+          _scrollToLeft();
+        } else if (dx >= _maxWidth - _scrollZoneWidth() &&
+            scrollOffset < bottomOffset &&
+            !_scrolling &&
+            delta >= 0) {
+          _scrollToRight();
+        } else {
+          _stopScroll();
+        }
       }
     }
   }
 
-  double? _currentMouseDx;
-  double? _currentMouseDy;
-  bool _isAnimating = false;
-  double _scrollZoneWidth() => _maxWidth / 20;
-  double _scrollZoneHeight() => _maxHeight / 13;
+  double _scrollZoneWidth() => _maxWidth / 13;
+  double _scrollZoneHeight() => _maxHeight / 20;
 
-  //TODO lỗi ko chọn đc icon đầu tiên vì chạy liên tục => bloc luồng
-  void _setupCursorTrackerDx(double dx) async {
-    _currentMouseDx = dx;
-    if (!_isAnimating) {
-      _isAnimating = true;
-      final double scrollOffset = _scrollController.offset;
-      final double topOffset = _scrollController.position.minScrollExtent;
-      final double bottomOffset = _scrollController.position.maxScrollExtent;
-      while (_currentMouseDx != null) {
-        if (_currentMouseDx == double.infinity) {
-          await _scrollController.animateTo(_scrollController.offset,
-              duration: Duration.zero, curve: Curves.linear);
-          _isAnimating = false;
-          break;
-        }
-        _isAnimating = true;
-        if (_currentMouseDx! <= _scrollZoneWidth()) {
-          await _scrollController.animateTo(_scrollController.offset - 100,
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.linear);
-          if (scrollOffset <= topOffset) {
-            _isAnimating = false;
-            break;
-          }
-        } else if (_currentMouseDx! >= _maxWidth - _scrollZoneWidth() &&
-            _currentMouseDx! < double.infinity) {
-          await _scrollController.animateTo(_scrollController.offset + 100,
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.linear);
-          if (scrollOffset >= bottomOffset) {
-            _isAnimating = false;
-            break;
-          }
-        } else {
-          await _scrollController.animateTo(_scrollController.offset,
-              duration: Duration.zero, curve: Curves.linear);
-          _isAnimating = false;
-          break;
-        }
-      }
+  void _scrollToLeft() async {
+    _scrolling = true;
+    final double scrollOffset = _scrollController.offset;
+    final double topOffset = _scrollController.position.minScrollExtent;
+    _scrollController
+        .animateTo(
+      topOffset,
+      duration: Duration(milliseconds: (scrollOffset - topOffset).toInt()),
+      curve: Curves.linear,
+    )
+        .then((value) {
+      _scrolling = false;
+    });
+  }
+
+  void _scrollToRight() async {
+    _scrolling = true;
+    final double scrollOffset = _scrollController.offset;
+    final double bottomOffset = _scrollController.position.maxScrollExtent;
+    _scrollController
+        .animateTo(
+      bottomOffset,
+      duration: Duration(milliseconds: (bottomOffset - scrollOffset).toInt()),
+      curve: Curves.linear,
+    )
+        .then((value) {
+      _scrolling = false;
+    });
+  }
+
+  void _stopScroll() {
+    if (_scrolling) {
+      _scrollController
+          .animateTo(_scrollController.offset,
+              duration: Duration.zero, curve: Curves.linear)
+          .then((value) {
+        _scrolling = false;
+      });
     }
   }
 
   void _onExit(PointerExitEvent event) {
-    if (widget.direction == Axis.vertical) {
-      if (_scrollController.hasClients) {
-        _setupCursorTrackerDy(double.infinity);
-      }
-    } else {
-      if (_scrollController.hasClients) {
-        _setupCursorTrackerDx(double.infinity);
-      }
-    }
+    _stopScroll();
   }
 
-  void _setupCursorTrackerDy(double dy) async {
-    _currentMouseDy = dy;
-    if (!_isAnimating) {
-      _isAnimating = true;
-      while (_currentMouseDy != null) {
-        if (_currentMouseDy == double.infinity) {
-          await _scrollController.animateTo(_scrollController.offset,
-              duration: Duration.zero, curve: Curves.linear);
-          _isAnimating = false;
-          return;
-        }
-        _isAnimating = true;
-        if (_currentMouseDy! <= _scrollZoneHeight()) {
-          await _scrollController.animateTo(_scrollController.offset - 100,
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.linear);
-        } else if (_currentMouseDy! >= _maxHeight - _scrollZoneHeight() &&
-            _currentMouseDy! < double.infinity) {
-          await _scrollController.animateTo(_scrollController.offset + 100,
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.linear);
-        } else {
-          await _scrollController.animateTo(_scrollController.offset,
-              duration: Duration.zero, curve: Curves.linear);
-          _isAnimating = false;
-          return;
-        }
-      }
-    }
-  }
-
-//  @override
-//  void afterFirstLayout(BuildContext context) {
-//    // Calling the same function "after layout" to resolve the issue.
-////    showHelloWorld();
-//    debugPrint('size:' + context.size.toString());
-//    debugPrint('constraints:' + context.findRenderObject().constraints.toString());
-//    context.visitChildElements((Element element) {
-//      debugPrint('element $element size:' + element.size.toString());
-//      debugPrint('element $element constraints:' + element.findRenderObject().constraints.toString());
-//    });
-////    if (widget.header != null) {
-////      Row headerRow = widget.header;
-////      headerRow.
-////    }
-//  }
   Widget defaultBuildItemsContainer(
       BuildContext context, Axis direction, List<Widget> children) {
     switch (direction) {
@@ -1229,6 +1120,8 @@ class ReorderableColumn extends ReorderableFlex {
     Key? key,
     Widget? header,
     Widget? footer,
+    Widget? extendItemTop,
+    Widget? extendItemBottom,
     EdgeInsets? padding,
     MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start,
     MainAxisSize mainAxisSize = MainAxisSize.max,
@@ -1241,8 +1134,6 @@ class ReorderableColumn extends ReorderableFlex {
     NoReorderCallback? onNoReorder,
     ReorderStartedCallback? onReorderStarted,
     ScrollController? scrollController,
-    bool needsLongPressDraggable = true,
-    bool oneClickDraggable = false,
     ScrollPhysics? physics,
     double draggingWidgetOpacity = 0.2,
     Duration? reorderAnimationDuration,
@@ -1279,6 +1170,8 @@ class ReorderableColumn extends ReorderableFlex {
             reorderAnimationDuration: reorderAnimationDuration,
             scrollAnimationDuration: scrollAnimationDuration,
             physics: physics,
+            extendItemTop: extendItemTop,
+            extendItemBottom: extendItemBottom,
             controller: controller,
             draggedItemBuilder: draggedItemBuilder,
             ignorePrimaryScrollController: ignorePrimaryScrollController);
@@ -1307,6 +1200,4 @@ class ReorderableController {
       element(value);
     });
   }
-
-  ValueChanged<int?>? onDragged;
 }
