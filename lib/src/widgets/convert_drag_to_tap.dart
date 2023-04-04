@@ -983,7 +983,6 @@ class DragAvatar<T extends Object> {
       _isDraging = true;
       _current = pos;
       _currentByKey = null;
-      debugPrint('_current $_current');
       final RenderBox box = context.findRenderObject()! as RenderBox;
       final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
       _update(overlayTopLeft);
@@ -1008,7 +1007,6 @@ class DragAvatar<T extends Object> {
           } else {
             _currentByKey = ((_currentByKey as int) + 1) as T?;
           }
-          debugPrint('_current $_currentByKey');
           final newPos = Offset(_position.dx, _position.dy + size.height);
           _update(newPos);
         }
@@ -1036,7 +1034,6 @@ class DragAvatar<T extends Object> {
           } else {
             _currentByKey = ((_currentByKey as int) - 1) as T?;
           }
-          debugPrint('_current $_currentByKey');
           final newPos = Offset(_position.dx, _position.dy - size.height);
           _update(newPos);
         }
