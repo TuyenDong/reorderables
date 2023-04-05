@@ -760,7 +760,6 @@ class DragAvatar<T extends Object> {
   Offset _prePosition;
   Offset? _lastOffset;
   OverlayEntry? _entry;
-  bool _isDraging = false;
   final Offset initialPosition;
 
   // update new position of draging item
@@ -814,10 +813,6 @@ class DragAvatar<T extends Object> {
     }
 
     _activeTarget = newTarget;
-  }
-
-  void updateDragingStatus() {
-    _isDraging = false;
   }
 
   Iterable<_DragTargetMouseState<Object>> _getDragTargets(
@@ -999,12 +994,9 @@ class DragAvatar<T extends Object> {
   // reset _currentByKey
   // update _current = current index
   void updatePos(BuildContext context, T? pos) {
-    if (!_isDraging) {
-      _isDraging = true;
-      _current = pos;
-      _currentByKey = null;
-      _update(Utils.offset(context));
-    }
+    _current = pos;
+    _currentByKey = null;
+    _update(Utils.offset(context));
   }
 
   bool _canUp = true;
@@ -1014,21 +1006,15 @@ class DragAvatar<T extends Object> {
   void onNext(double min, double max) {
     if (horizontal) {
       if ((_position.dx + size.width * 2) <= max) {
-        if (!_isDraging) {
-          _isDraging = true;
-          _update(Offset(_position.dx + size.width, _position.dy));
-        }
+        _update(Offset(_position.dx + size.width, _position.dy));
       }
     } else {
       if ((_position.dy + size.height) < max) {
-        if (!_isDraging) {
-          _isDraging = true;
-          _currentByKey = data;
-          final newPos = Offset(_position.dx, _position.dy + size.height);
-          _update(newPos);
-        }
+        _currentByKey = data;
+        final newPos = Offset(_position.dx, _position.dy + size.height);
+        _update(newPos);
       }
-      _canDown = (_position.dy + size.height ) < max;
+      _canDown = (_position.dy + size.height) < max;
       _canUp = _position.dy >= size.height && _position.dy > min;
     }
   }
@@ -1037,21 +1023,15 @@ class DragAvatar<T extends Object> {
   void onPre(double min, double max) {
     if (horizontal) {
       if (_position.dx >= size.width) {
-        if (!_isDraging) {
-          _isDraging = true;
-          _update(Offset(_position.dx - size.width, _position.dy));
-        }
+        _update(Offset(_position.dx - size.width, _position.dy));
       }
     } else {
       if (_position.dy >= size.height && _position.dy > min) {
-        if (!_isDraging) {
-          _isDraging = true;
-          _currentByKey = data;
-          final newPos = Offset(_position.dx, _position.dy - size.height);
-          _update(newPos);
-        }
+        _currentByKey = data;
+        final newPos = Offset(_position.dx, _position.dy - size.height);
+        _update(newPos);
       }
-      _canDown = (_position.dy + size.height ) < max;
+      _canDown = (_position.dy + size.height) < max;
       _canUp = _position.dy >= size.height && _position.dy > min;
     }
   }

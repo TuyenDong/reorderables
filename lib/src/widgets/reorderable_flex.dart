@@ -753,9 +753,6 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
           });
 
           // If the target is not the original starting point, then we will accept the drop.
-          if (_currentDrag != null) {
-            _currentDrag!.updateDragingStatus();
-          }
           return willAccept; //_dragging == toAccept && toAccept != toWrap.key;
         },
         onAccept: (int accepted) {},
