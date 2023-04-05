@@ -5,6 +5,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:reorderables/src/widgets/utils.dart';
 
 /// Signature for determining whether the given data will be accepted by a [DragTargetMouse].
 ///
@@ -482,16 +483,16 @@ class _DraggableByMouseState<T extends Object>
     if (canDrag) {
       return MouseRegion(
         onEnter: (event) {
-          widget.currentDrag!.updatePos(context, widget.data);
+          if (showChild) {
+            widget.currentDrag!.updatePos(context, widget.data);
+          }
         },
         child: showChild ? widget.child : widget.childWhenDragging,
       );
     }
     return GestureDetector(
       onTap: () {
-        final RenderBox box = context.findRenderObject()! as RenderBox;
-        final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
-        _avatar = _startDrag(overlayTopLeft);
+        _avatar = _startDrag(Utils.offset(context));
         widget.onChange(_avatar, widget.data);
       },
       child: showChild ? widget.child : widget.childWhenDragging,
@@ -715,7 +716,7 @@ class DragAvatar<T extends Object> {
     this.dataMax,
     this.axis,
     required this.size,
-    required Offset initialPosition,
+    required this.initialPosition,
     this.dragStartPoint = Offset.zero,
     this.feedback,
     this.extendItemTop,
@@ -760,6 +761,7 @@ class DragAvatar<T extends Object> {
   Offset? _lastOffset;
   OverlayEntry? _entry;
   bool _isDraging = false;
+  final Offset initialPosition;
 
   // update new position of draging item
   // bool get _isDrapUp => _prePosition.dy > _position.dy;
@@ -812,6 +814,9 @@ class DragAvatar<T extends Object> {
     }
 
     _activeTarget = newTarget;
+  }
+
+  void updateDragingStatus() {
     _isDraging = false;
   }
 
@@ -891,10 +896,11 @@ class DragAvatar<T extends Object> {
   //  2 case:
   //  1. handle by mouse => check _current index
   //  2. handle by keyboard arrow => check _currentByKey
+  // so sánh tọa độ cha nếu phần trên == tọa độ tra - margin => show
   Widget? get _extendItemTop {
     if (extendItemTop != null) {
       if (_currentByKey != null) {
-        if (_currentByKey != 0) {
+        if (_canUp) {
           return extendItemTop;
         }
       } else {
@@ -931,10 +937,11 @@ class DragAvatar<T extends Object> {
   //  2 case:
   //  1. handle by mouse => check _current index
   //  2. handle by keyboard arrow => check _currentByKey
+  // so sánh tọa độ cha nếu phần dưới (dy + height) == tọa độ tra (dy)
   Widget? get _extendItemBottom {
     if (extendItemBottom != null) {
       if (_currentByKey != null) {
-        if (_currentByKey != dataMax) {
+        if (_canDown) {
           return extendItemBottom;
         }
       } else {
@@ -996,14 +1003,15 @@ class DragAvatar<T extends Object> {
       _isDraging = true;
       _current = pos;
       _currentByKey = null;
-      final RenderBox box = context.findRenderObject()! as RenderBox;
-      final Offset overlayTopLeft = box.localToGlobal(Offset.zero);
-      _update(overlayTopLeft);
+      _update(Utils.offset(context));
     }
   }
 
+  bool _canUp = true;
+  bool _canDown = true;
+
 //handle keyboard arrowDown
-  void onNext(double max) {
+  void onNext(double min, double max) {
     if (horizontal) {
       if ((_position.dx + size.width * 2) <= max) {
         if (!_isDraging) {
@@ -1015,20 +1023,18 @@ class DragAvatar<T extends Object> {
       if ((_position.dy + size.height * 2) <= max) {
         if (!_isDraging) {
           _isDraging = true;
-          if (_currentByKey == null) {
-            _currentByKey = ((data as int) + 1) as T?;
-          } else {
-            _currentByKey = ((_currentByKey as int) + 1) as T?;
-          }
+          _currentByKey = data;
           final newPos = Offset(_position.dx, _position.dy + size.height);
           _update(newPos);
         }
       }
+      _canDown = (_position.dy + size.height * 2) <= max;
+      _canUp = _position.dy >= size.height && _position.dy > min;
     }
   }
 
 //handle keyboardarrowUp
-  void onPre(BuildContext context) {
+  void onPre(double min, double max) {
     if (horizontal) {
       if (_position.dx >= size.width) {
         if (!_isDraging) {
@@ -1037,28 +1043,30 @@ class DragAvatar<T extends Object> {
         }
       }
     } else {
-      final RenderBox box = context.findRenderObject()! as RenderBox;
-      final Offset offsetParent = box.localToGlobal(Offset.zero);
-      if (_position.dy >= size.height && _position.dy > offsetParent.dy) {
+      if (_position.dy >= size.height && _position.dy > min) {
         if (!_isDraging) {
           _isDraging = true;
-          if (_currentByKey == null) {
-            _currentByKey = ((data as int) - 1) as T?;
-          } else {
-            _currentByKey = ((_currentByKey as int) - 1) as T?;
-          }
+          _currentByKey = data;
           final newPos = Offset(_position.dx, _position.dy - size.height);
           _update(newPos);
         }
       }
+      _canDown = (_position.dy + size.height * 2) <= max;
+      _canUp = _position.dy >= size.height && _position.dy > min;
     }
   }
 
   // update position when auto scroll
   void updateOfset(double ofset) {
+    debugPrint('ofset $ofset');
     if (horizontal) {
       _update(Offset(_position.dx - ofset, _position.dy));
     } else {
+      if (ofset < 0) {
+        _canUp = true;
+      } else {
+        _canDown = true;
+      }
       _update(Offset(_position.dx, _position.dy - ofset));
     }
   }

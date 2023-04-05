@@ -8,6 +8,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:reorderables/src/widgets/utils.dart';
 
 import './passthrough_overlay.dart';
 import './reorderable_mixin.dart';
@@ -752,6 +753,9 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
           });
 
           // If the target is not the original starting point, then we will accept the drop.
+          if (_currentDrag != null) {
+            _currentDrag!.updateDragingStatus();
+          }
           return willAccept; //_dragging == toAccept && toAccept != toWrap.key;
         },
         onAccept: (int accepted) {},
@@ -886,17 +890,19 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
     if (_currentDrag != null) {
       _moveByKey = true;
       if (horizontal) {
+        final RenderBox box = context.findRenderObject()! as RenderBox;
+        final offset = Utils.offset(context);
         if (event.isKeyPressed(LogicalKeyboardKey.arrowRight)) {
-          final RenderBox box = context.findRenderObject()! as RenderBox;
-          _currentDrag!.onNext(box.size.width);
+          _currentDrag!.onNext(offset.dx, box.size.width + offset.dx);
         } else if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft)) {
-          _currentDrag!.onPre(context);
+          _currentDrag!.onPre(offset.dx, box.size.width + offset.dx);
         }
       } else {
+        final offset = Utils.offset(context);
         if (event.isKeyPressed(LogicalKeyboardKey.arrowDown)) {
-          _currentDrag!.onNext(_maxHeight);
+          _currentDrag!.onNext(offset.dy, _maxHeight + offset.dy);
         } else if (event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {
-          _currentDrag!.onPre(context);
+          _currentDrag!.onPre(offset.dy, _maxHeight + offset.dy);
         }
       }
     }

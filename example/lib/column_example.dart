@@ -21,6 +21,7 @@ class _ColumnExampleState extends State<ColumnExample> {
       'assets/river1.jpg',
       'assets/river2.jpg',
       'assets/river3.jpg',
+
     ];
   }
 
@@ -39,42 +40,48 @@ class _ColumnExampleState extends State<ColumnExample> {
       backgroundColor: Colors.black,
       body: Column(
         children: [
+          const SizedBox(
+            height: 150,
+          ),
           Expanded(
             flex: 2,
             child: Container(
               color: Colors.amber,
               alignment: Alignment.center,
-              child: ReorderableColumn(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                ignorePrimaryScrollController: true,
-                controller: _controller,
-                children: List.generate(_columns.length, (index) {
-                  final value = _columns[index];
-                  return _item(index: index, value: value);
-                }),
-                onReorder: _onReorder,
-                extendItemTop: Positioned.fill(
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: Transform.translate(
-                      offset: const Offset(0, -dx + 20),
-                      child: const Icon(
-                        Icons.keyboard_arrow_up,
-                        size: 32,
-                        color: Colors.red,
+              child: Container(
+                color: Colors.red,
+                child: ReorderableColumn(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  ignorePrimaryScrollController: true,
+                  controller: _controller,
+                  children: List.generate(_columns.length, (index) {
+                    final value = _columns[index];
+                    return _item(index: index, value: value);
+                  }),
+                  onReorder: _onReorder,
+                  extendItemTop: Positioned.fill(
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      child: Transform.translate(
+                        offset: const Offset(0, -dx + 20),
+                        child: const Icon(
+                          Icons.keyboard_arrow_up,
+                          size: 32,
+                          color: Colors.red,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                extendItemBottom: Positioned.fill(
-                  child: Align(
-                    alignment: Alignment.bottomRight,
-                    child: Transform.translate(
-                      offset: Offset(0, dx),
-                      child: const Icon(
-                        Icons.keyboard_arrow_down,
-                        size: 32,
-                        color: Colors.red,
+                  extendItemBottom: Positioned.fill(
+                    child: Align(
+                      alignment: Alignment.bottomRight,
+                      child: Transform.translate(
+                        offset: Offset(0, dx),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 32,
+                          color: Colors.red,
+                        ),
                       ),
                     ),
                   ),
@@ -82,8 +89,8 @@ class _ColumnExampleState extends State<ColumnExample> {
               ),
             ),
           ),
-          Expanded(
-            flex: 1,
+          SizedBox(
+            height: 100,
             child: IconButton(
               onPressed: _onPress,
               icon: Icon(
