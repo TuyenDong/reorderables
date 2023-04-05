@@ -49,6 +49,8 @@ class ReorderableFlex extends StatefulWidget {
     required this.children,
     required this.onReorder,
     required this.direction,
+    this.marginLeftDragingItem,
+    this.maringBottomDragingItem,
     this.scrollDirection = Axis.vertical,
     this.padding,
     this.buildItemsContainer,
@@ -90,8 +92,15 @@ class ReorderableFlex extends StatefulWidget {
   ///
   /// If null, no footer will appear at the bottom/right of the widget.
   final Widget? footer;
+
+  // only for vertical
   final Widget? extendItemTop;
+  // only for vertical
   final Widget? extendItemBottom;
+  // only for vertical
+  final double? marginLeftDragingItem;
+  // only for horizontal
+  final double? maringBottomDragingItem;
 
   /// The widgets to display.
   final List<Widget> children;
@@ -172,6 +181,8 @@ class _ReorderableFlexState extends State<ReorderableFlex> {
           physics: widget.physics,
           controller: widget.controller,
           draggedItemBuilder: widget.draggedItemBuilder,
+          marginLeftDragingItem: widget.marginLeftDragingItem,
+          maringBottomDragingItem: widget.maringBottomDragingItem,
           reorderAnimationDuration: widget.reorderAnimationDuration ??
               const Duration(milliseconds: 200),
           scrollAnimationDuration: widget.scrollAnimationDuration ??
@@ -219,6 +230,8 @@ class _ReorderableFlexContent extends StatefulWidget {
     this.scrollAnimationDuration = const Duration(milliseconds: 200),
     this.physics,
     this.controller,
+    this.marginLeftDragingItem,
+    this.maringBottomDragingItem,
   });
 
   final Widget? header;
@@ -243,6 +256,10 @@ class _ReorderableFlexContent extends StatefulWidget {
   final Duration scrollAnimationDuration;
   final ScrollPhysics? physics;
   final ReorderableController? controller;
+  // only for vertical
+  final double? marginLeftDragingItem;
+  // only for horizontal
+  final double? maringBottomDragingItem;
 
   @override
   _ReorderableFlexContentState createState() => _ReorderableFlexContentState();
@@ -655,6 +672,8 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
           ignoringFeedbackSemantics: false,
           extendItemBottom: widget.extendItemBottom,
           extendItemTop: widget.extendItemTop,
+          marginLeftDragingItem: widget.marginLeftDragingItem,
+          maringBottomDragingItem: widget.maringBottomDragingItem,
           // item đang hiệu ứng di chuyển không click đc vì là transform
           feedback: feedbackBuilder,
           currentDrag: _currentDrag,
@@ -1054,6 +1073,7 @@ class ReorderableRow extends ReorderableFlex {
     Duration? scrollAnimationDuration,
     Widget Function(BuildContext context, int index)? draggedItemBuilder,
     bool ignorePrimaryScrollController = false,
+    double maringBottomDragingItem = 50,
   }) : super(
             key: key,
             header: header,
@@ -1084,6 +1104,7 @@ class ReorderableRow extends ReorderableFlex {
             draggingWidgetOpacity: draggingWidgetOpacity,
             reorderAnimationDuration: reorderAnimationDuration,
             scrollAnimationDuration: scrollAnimationDuration,
+            maringBottomDragingItem: maringBottomDragingItem,
             physics: physics,
             controller: controller,
             ignorePrimaryScrollController: ignorePrimaryScrollController);
@@ -1141,6 +1162,7 @@ class ReorderableColumn extends ReorderableFlex {
     ReorderableController? controller,
     Widget Function(BuildContext context, int index)? draggedItemBuilder,
     bool ignorePrimaryScrollController = false,
+    double marginLeftDragingItem = 80,
   }) : super(
             key: key,
             header: header,
@@ -1172,6 +1194,7 @@ class ReorderableColumn extends ReorderableFlex {
             physics: physics,
             extendItemTop: extendItemTop,
             extendItemBottom: extendItemBottom,
+            marginLeftDragingItem: marginLeftDragingItem,
             controller: controller,
             draggedItemBuilder: draggedItemBuilder,
             ignorePrimaryScrollController: ignorePrimaryScrollController);

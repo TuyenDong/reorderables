@@ -181,6 +181,8 @@ class DraggableByMouse<T extends Object> extends StatefulWidget {
     this.hitTestBehavior = HitTestBehavior.deferToChild,
     required this.onChange,
     this.currentDrag,
+    this.marginLeftDragingItem,
+    this.maringBottomDragingItem,
     required this.indexDraging,
   });
   final Function(DragAvatar?, T?) onChange;
@@ -191,6 +193,10 @@ class DraggableByMouse<T extends Object> extends StatefulWidget {
   /// The data that will be dropped by this draggable.
   final T? data;
   final T? dataMax;
+  // only for vertical
+  final double? marginLeftDragingItem;
+  // only for horizontal
+  final double? maringBottomDragingItem;
 
   /// The [Axis] to restrict this draggable's movement, if specified.
   ///
@@ -433,6 +439,8 @@ class _DraggableByMouseState<T extends Object>
       extendItemTop: widget.extendItemTop,
       extendItemBottom: widget.extendItemBottom,
       feedbackOffset: widget.feedbackOffset,
+      marginLeftDragingItem: widget.marginLeftDragingItem,
+      maringBottomDragingItem: widget.maringBottomDragingItem,
       ignoringFeedbackSemantics: widget.ignoringFeedbackSemantics,
       ignoringFeedbackPointer: widget.ignoringFeedbackPointer,
       onDragEnd: (Velocity velocity, Offset offset, bool wasAccepted) {
@@ -714,6 +722,8 @@ class DragAvatar<T extends Object> {
     this.extendItemBottom,
     this.feedbackOffset = Offset.zero,
     this.onDragEnd,
+    this.marginLeftDragingItem,
+    this.maringBottomDragingItem,
     required this.ignoringFeedbackSemantics,
     required this.ignoringFeedbackPointer,
   })  : _position = initialPosition,
@@ -738,7 +748,10 @@ class DragAvatar<T extends Object> {
   final OverlayState overlayState;
   final bool ignoringFeedbackSemantics;
   final bool ignoringFeedbackPointer;
-
+  // only for vertical
+  final double? marginLeftDragingItem;
+  // only for horizontal
+  final double? maringBottomDragingItem;
   _DragTargetMouseState<Object>? _activeTarget;
   final List<_DragTargetMouseState<Object>> _enteredTargets =
       <_DragTargetMouseState<Object>>[];
@@ -847,8 +860,8 @@ class DragAvatar<T extends Object> {
   Widget _build(BuildContext context) {
     if (horizontal) {
       return Positioned(
-        left: horizontal ? _position.dx : _position.dx + 50,
-        top: horizontal ? _position.dy - 50 : _position.dy,
+        left: _position.dx,
+        top: _position.dy - (maringBottomDragingItem ?? 50),
         child: IgnorePointer(
           ignoring: ignoringFeedbackPointer,
           ignoringSemantics: ignoringFeedbackSemantics,
@@ -857,8 +870,8 @@ class DragAvatar<T extends Object> {
       );
     }
     return Positioned(
-      left: horizontal ? _position.dx : _position.dx + 50,
-      top: horizontal ? _position.dy - 50 : _position.dy,
+      left: _position.dx + (marginLeftDragingItem ?? 80),
+      top: _position.dy,
       child: IgnorePointer(
         ignoring: ignoringFeedbackPointer,
         ignoringSemantics: ignoringFeedbackSemantics,
