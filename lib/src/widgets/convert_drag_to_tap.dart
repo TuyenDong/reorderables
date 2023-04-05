@@ -1020,7 +1020,7 @@ class DragAvatar<T extends Object> {
         }
       }
     } else {
-      if ((_position.dy + size.height * 2) <= max) {
+      if ((_position.dy + size.height) < max) {
         if (!_isDraging) {
           _isDraging = true;
           _currentByKey = data;
@@ -1028,7 +1028,7 @@ class DragAvatar<T extends Object> {
           _update(newPos);
         }
       }
-      _canDown = (_position.dy + size.height * 2) <= max;
+      _canDown = (_position.dy + size.height ) < max;
       _canUp = _position.dy >= size.height && _position.dy > min;
     }
   }
@@ -1051,14 +1051,13 @@ class DragAvatar<T extends Object> {
           _update(newPos);
         }
       }
-      _canDown = (_position.dy + size.height * 2) <= max;
+      _canDown = (_position.dy + size.height ) < max;
       _canUp = _position.dy >= size.height && _position.dy > min;
     }
   }
 
   // update position when auto scroll
   void updateOfset(double ofset) {
-    debugPrint('ofset $ofset');
     if (horizontal) {
       _update(Offset(_position.dx - ofset, _position.dy));
     } else {

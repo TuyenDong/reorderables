@@ -898,11 +898,12 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
           _currentDrag!.onPre(offset.dx, box.size.width + offset.dx);
         }
       } else {
+        final RenderBox box = context.findRenderObject()! as RenderBox;
         final offset = Utils.offset(context);
         if (event.isKeyPressed(LogicalKeyboardKey.arrowDown)) {
-          _currentDrag!.onNext(offset.dy, _maxHeight + offset.dy);
+          _currentDrag!.onNext(offset.dy, box.size.height + offset.dy);
         } else if (event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {
-          _currentDrag!.onPre(offset.dy, _maxHeight + offset.dy);
+          _currentDrag!.onPre(offset.dy, box.size.height + offset.dy);
         }
       }
     }
