@@ -716,7 +716,7 @@ class DragAvatar<T extends Object> {
     this.dataMax,
     this.axis,
     required this.size,
-    required this.initialPosition,
+    required Offset initialPosition,
     this.dragStartPoint = Offset.zero,
     this.feedback,
     this.extendItemTop,
@@ -760,7 +760,6 @@ class DragAvatar<T extends Object> {
   Offset _prePosition;
   Offset? _lastOffset;
   OverlayEntry? _entry;
-  final Offset initialPosition;
 
   // update new position of draging item
   // bool get _isDrapUp => _prePosition.dy > _position.dy;
