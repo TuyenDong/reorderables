@@ -1,7 +1,7 @@
 // Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -632,7 +632,8 @@ class _DragTargetMouseState<T extends Object>
   // because dart doubles and ints are backed by the same kind of object on web.
   // JavaScript does not support integers.
   bool isExpectedDataType(Object? data, Type type) {
-    if (((type == int && T == double) || (type == double && T == int))) {
+    if (kIsWeb &&
+        ((type == int && T == double) || (type == double && T == int))) {
       return false;
     }
     return data is T?;
