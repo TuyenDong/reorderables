@@ -7,6 +7,7 @@ class Utils {
   }
 
   static Offset _offset = Offset.zero;
+  static Offset get origin => _offset;
 
   static void configOffset(Offset value) {
     _offset = value;

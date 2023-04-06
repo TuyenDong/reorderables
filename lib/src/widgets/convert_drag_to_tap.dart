@@ -786,7 +786,8 @@ class DragAvatar<T extends Object> {
     _lastOffset = globalPosition - dragStartPoint;
     _entry!.markNeedsBuild();
     final HitTestResult result = HitTestResult();
-    WidgetsBinding.instance.hitTest(result, globalPosition + feedbackOffset);
+    final newGlobalPosition = globalPosition - Utils.origin;
+    WidgetsBinding.instance.hitTest(result, newGlobalPosition + feedbackOffset);
 
     final List<_DragTargetMouseState<Object>> targets =
         _getDragTargets(result.path).toList();

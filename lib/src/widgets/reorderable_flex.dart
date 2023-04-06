@@ -135,10 +135,6 @@ class ReorderableFlex extends StatefulWidget {
   final Duration? scrollAnimationDuration;
   final bool ignorePrimaryScrollController;
 
-  static void setCoordinates(Offset value) {
-    Utils.configOffset(value);
-  }
-
   @override
   State<ReorderableFlex> createState() => _ReorderableFlexState();
 }
@@ -1230,5 +1226,10 @@ class ReorderableController {
     _listeners.forEach((element) {
       element(value);
     });
+  }
+
+  // update new coordinates. only for widgetbook evironment
+  static void setCoordinates(Offset value) {
+    Utils.configOffset(value);
   }
 }
