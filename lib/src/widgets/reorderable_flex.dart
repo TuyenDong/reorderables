@@ -385,6 +385,7 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
     }
     _entranceController.dispose();
     _ghostController.dispose();
+    stopReorder();
     super.dispose();
   }
 
@@ -1226,10 +1227,5 @@ class ReorderableController {
     _listeners.forEach((element) {
       element(value);
     });
-  }
-
-  // update new coordinates. only for widgetbook evironment
-  static void setCoordinates(Offset value) {
-    Utils.configOffset(value);
   }
 }
