@@ -1228,4 +1228,9 @@ class ReorderableController {
       element(value);
     });
   }
+
+  // update new coordinates. only for widgetbook evironment
+  static void setCoordinates(Offset value) {
+    Utils.configOffset(value);
+  }
 }
