@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:reorderables/src/widgets/utils.dart';
+import 'utils.dart';
 
 /// Signature for determining whether the given data will be accepted by a [DragTargetMouse].
 ///
@@ -770,9 +770,9 @@ class DragAvatar<T extends Object> {
     _updateDrag(_position);
   }
 
-  void end(DragEndDetails details) {
-    finishDrag(_DragEndKind.dropped, _restrictVelocityAxis(details.velocity));
-  }
+  // void end(DragEndDetails details) {
+  //   finishDrag(_DragEndKind.dropped, _restrictVelocityAxis(details.velocity));
+  // }
 
   void enDrag() {
     finishDrag(_DragEndKind.dropped);
@@ -786,8 +786,8 @@ class DragAvatar<T extends Object> {
     _lastOffset = globalPosition - dragStartPoint;
     _entry!.markNeedsBuild();
     final HitTestResult result = HitTestResult();
-    final newGlobalPosition = globalPosition - Utils.origin;
-    WidgetsBinding.instance.hitTest(result, newGlobalPosition + feedbackOffset);
+    final newglobalPosition = globalPosition - Utils.origin;
+    WidgetsBinding.instance.hitTest(result, newglobalPosition + feedbackOffset);
 
     final List<_DragTargetMouseState<Object>> targets =
         _getDragTargets(result.path).toList();
@@ -866,7 +866,13 @@ class DragAvatar<T extends Object> {
         child: IgnorePointer(
           ignoring: ignoringFeedbackPointer,
           ignoringSemantics: ignoringFeedbackSemantics,
-          child: feedback,
+          child: Stack(
+            children: [
+              if (feedback != null) feedback!,
+              if (_extendItemTop != null) _extendItemTop!,
+              if (_extendItemBottom != null) _extendItemBottom!
+            ],
+          ),
         ),
       );
     }
@@ -887,7 +893,12 @@ class DragAvatar<T extends Object> {
     );
   }
 
-  bool get _isDrapUp => _prePosition.dy > _position.dy;
+  bool get _isDrapNext {
+    if (horizontal) {
+      return _prePosition.dx > _position.dx;
+    }
+    return _prePosition.dy > _position.dy;
+  }
 
   //  2 case:
   //  1. handle by mouse => check _current index
@@ -896,21 +907,21 @@ class DragAvatar<T extends Object> {
   Widget? get _extendItemTop {
     if (extendItemTop != null) {
       if (_currentByKey != null) {
-        if (_canUp) {
+        if (_canPre) {
           return extendItemTop;
         }
       } else {
         if (data == 0) {
           if (_current == null || _current == 0) {
             return null;
-          } else if (_current == 1 && !_isDrapUp) {
+          } else if (_current == 1 && !_isDrapNext) {
             return extendItemTop;
           } else if (_current != 1) {
             return extendItemTop;
           }
         } else if (data != 0) {
           if (_current == 0) {
-            if (_isDrapUp) {
+            if (_isDrapNext) {
               return null;
             }
             return extendItemTop;
@@ -919,7 +930,7 @@ class DragAvatar<T extends Object> {
         } else if (data == dataMax) {
           if (_current == null) {
             return extendItemTop;
-          } else if (_current == ((dataMax! as int) - 1) && _isDrapUp) {
+          } else if (_current == ((dataMax! as int) - 1) && _isDrapNext) {
             return extendItemTop;
           } else if (_current != ((dataMax! as int) - 1)) {
             return extendItemTop;
@@ -937,20 +948,20 @@ class DragAvatar<T extends Object> {
   Widget? get _extendItemBottom {
     if (extendItemBottom != null) {
       if (_currentByKey != null) {
-        if (_canDown) {
+        if (_canNext) {
           return extendItemBottom;
         }
       } else {
         if (data == dataMax) {
           if (_current == null) {
             return null;
-          } else if (_current == ((dataMax! as int) - 1) && !_isDrapUp) {
+          } else if (_current == ((dataMax! as int) - 1) && !_isDrapNext) {
             return null;
           } else {
             return extendItemBottom;
           }
         } else if (data != 0) {
-          if (_current == dataMax && !_isDrapUp) {
+          if (_current == dataMax && !_isDrapNext) {
             return null;
           } else if (_current == 0) {
             return extendItemBottom;
@@ -959,7 +970,7 @@ class DragAvatar<T extends Object> {
         } else if (data == 0) {
           if (_current == null) {
             return extendItemBottom;
-          } else if (_current == dataMax && _isDrapUp) {
+          } else if (_current == dataMax && _isDrapNext) {
             return extendItemBottom;
           } else if (_current != dataMax) {
             return extendItemBottom;
@@ -970,26 +981,7 @@ class DragAvatar<T extends Object> {
     return null;
   }
 
-  Velocity _restrictVelocityAxis(Velocity velocity) {
-    if (axis == null) {
-      return velocity;
-    }
-    return Velocity(
-      pixelsPerSecond: _restrictAxis(velocity.pixelsPerSecond),
-    );
-  }
-
   bool get horizontal => axis == Axis.horizontal;
-
-  Offset _restrictAxis(Offset offset) {
-    if (axis == null) {
-      return offset;
-    }
-    if (axis == Axis.horizontal) {
-      return Offset(offset.dx, 0.0);
-    }
-    return Offset(0.0, offset.dy);
-  }
 
   // handle update new positon by mouse
   // reset _currentByKey
@@ -1000,53 +992,69 @@ class DragAvatar<T extends Object> {
     _update(Utils.offset(context));
   }
 
-  bool _canUp = true;
-  bool _canDown = true;
+  bool _canPre = true;
+  bool _canNext = true;
 
 //handle keyboard arrowDown
-  void onNext(double min, double max) {
+  void onNext({
+    required double min,
+    required double max,
+    required Size footer,
+    required Size header,
+  }) {
     if (horizontal) {
       if ((_position.dx + size.width * 2) <= max) {
+        _currentByKey = data;
         _update(Offset(_position.dx + size.width, _position.dy));
       }
+      _canNext = (_position.dx + size.width * 2) <= max;
+      _canPre = _position.dx >= (size.width + footer.width);
     } else {
       if ((_position.dy + size.height) < max) {
         _currentByKey = data;
         final newPos = Offset(_position.dx, _position.dy + size.height);
         _update(newPos);
       }
-      _canDown = (_position.dy + size.height) < max;
-      _canUp = _position.dy >= size.height && _position.dy > min;
+      _canNext = (_position.dy + size.height) < max;
+      _canPre = _position.dy >= size.height && _position.dy > min;
     }
   }
 
 //handle keyboardarrowUp
-  void onPre(double min, double max) {
+  void onPre({
+    required double min,
+    required double max,
+    required Size footer,
+    required Size header,
+  }) {
     if (horizontal) {
-      if (_position.dx >= size.width) {
+      if (_position.dx >= (size.width + header.width)) {
+        _currentByKey = data;
         _update(Offset(_position.dx - size.width, _position.dy));
       }
+      _canNext = (_position.dx + size.width * 2) < max;
+      _canPre = _position.dx >= (size.width + header.width);
     } else {
       if (_position.dy >= size.height && _position.dy > min) {
         _currentByKey = data;
         final newPos = Offset(_position.dx, _position.dy - size.height);
         _update(newPos);
       }
-      _canDown = (_position.dy + size.height) < max;
-      _canUp = _position.dy >= size.height && _position.dy > min;
+      _canNext = (_position.dy + size.height) < max;
+      _canPre = _position.dy >= size.height && _position.dy > min;
     }
   }
 
   // update position when auto scroll
   void updateOfset(double ofset) {
+    if (ofset < 0) {
+      _canPre = true;
+    } else {
+      _canNext = true;
+    }
     if (horizontal) {
       _update(Offset(_position.dx - ofset, _position.dy));
     } else {
-      if (ofset < 0) {
-        _canUp = true;
-      } else {
-        _canDown = true;
-      }
       _update(Offset(_position.dx, _position.dy - ofset));
     }
   }

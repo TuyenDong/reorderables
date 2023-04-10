@@ -97,7 +97,7 @@ class _RowExampleState extends State<RowExample> {
         _columns.insert(newIndex, col);
       });
     }
-
+    const dx = 20.0;
     return Scaffold(
       backgroundColor: Colors.black,
       body: Column(
@@ -132,7 +132,42 @@ class _RowExampleState extends State<RowExample> {
                   width: 100,
                   child: Text('Edit'),
                 ),
+                header: Container(
+                  height: 100,
+                  padding: EdgeInsets.all(10),
+                  margin: EdgeInsets.only(right: 10),
+                  color: Colors.green,
+                  alignment: Alignment.center,
+                  width: 100,
+                  child: Text('Edit'),
+                ),
                 onReorder: _onReorder,
+                extendItemTop: Positioned.fill(
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Transform.translate(
+                        offset: const Offset(-dx-10, 0),
+                        child: const Icon(
+                          Icons.keyboard_arrow_left,
+                          size: 32,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                  ),
+                  extendItemBottom: Positioned.fill(
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      child: Transform.translate(
+                        offset: Offset(dx, 0),
+                        child: const Icon(
+                          Icons.keyboard_arrow_right,
+                          size: 32,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                  ),
                 // draggingWidgetOpacity: 0,
                 // draggedItemBuilder: (context, index) {
                 //    final value = _columns[index];

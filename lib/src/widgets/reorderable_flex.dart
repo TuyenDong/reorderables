@@ -227,8 +227,8 @@ class _ReorderableFlexContent extends StatefulWidget {
     required this.buildDraggableFeedback,
     required this.padding,
     this.draggedItemBuilder,
-    this.reorderAnimationDuration = const Duration(milliseconds: 200),
-    this.scrollAnimationDuration = const Duration(milliseconds: 200),
+    this.reorderAnimationDuration = const Duration(milliseconds: 100),
+    this.scrollAnimationDuration = const Duration(milliseconds: 100),
     this.physics,
     this.controller,
     this.marginLeftDragingItem,
@@ -884,6 +884,20 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
 
   bool _moveByKey = false;
 
+  Size get _footerSize {
+    if (widget.footer == null) {
+      return Size(0, 0);
+    }
+    return Utils.measureWidget(widget.footer!);
+  }
+
+  Size get _headerSize {
+    if (widget.header == null) {
+      return Size(0, 0);
+    }
+    return Utils.measureWidget(widget.header!);
+  }
+
   void _onKey(RawKeyEvent event) async {
     if (_currentDrag != null) {
       _moveByKey = true;
@@ -891,17 +905,37 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
         final RenderBox box = context.findRenderObject()! as RenderBox;
         final offset = Utils.offset(context);
         if (event.isKeyPressed(LogicalKeyboardKey.arrowRight)) {
-          _currentDrag!.onNext(offset.dx, box.size.width + offset.dx);
+          _currentDrag!.onNext(
+            min: offset.dx + _headerSize.width,
+            max: box.size.width + offset.dx - _footerSize.width,
+            footer: _footerSize,
+            header: _headerSize,
+          );
         } else if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft)) {
-          _currentDrag!.onPre(offset.dx, box.size.width + offset.dx);
+          _currentDrag!.onPre(
+            min: offset.dx + _headerSize.width,
+            max: box.size.width + offset.dx - _footerSize.width,
+            footer: _footerSize,
+            header: _headerSize,
+          );
         }
       } else {
         final RenderBox box = context.findRenderObject()! as RenderBox;
         final offset = Utils.offset(context);
         if (event.isKeyPressed(LogicalKeyboardKey.arrowDown)) {
-          _currentDrag!.onNext(offset.dy, box.size.height + offset.dy);
+          _currentDrag!.onNext(
+            min: offset.dy + _headerSize.height,
+            max: box.size.height + offset.dy - _footerSize.height,
+            footer: _footerSize,
+            header: _headerSize,
+          );
         } else if (event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {
-          _currentDrag!.onPre(offset.dy, box.size.height + offset.dy);
+          _currentDrag!.onPre(
+            min: offset.dy + _headerSize.height,
+            max: box.size.height + offset.dy - _footerSize.height,
+            footer: _footerSize,
+            header: _headerSize,
+          );
         }
       }
     }
@@ -1079,6 +1113,8 @@ class ReorderableRow extends ReorderableFlex {
     Widget Function(BuildContext context, int index)? draggedItemBuilder,
     bool ignorePrimaryScrollController = false,
     double maringBottomDragingItem = 50,
+    Widget? extendItemTop,
+    Widget? extendItemBottom,
   }) : super(
             key: key,
             header: header,
@@ -1110,6 +1146,8 @@ class ReorderableRow extends ReorderableFlex {
             reorderAnimationDuration: reorderAnimationDuration,
             scrollAnimationDuration: scrollAnimationDuration,
             maringBottomDragingItem: maringBottomDragingItem,
+            extendItemTop: extendItemTop,
+            extendItemBottom: extendItemBottom,
             physics: physics,
             controller: controller,
             ignorePrimaryScrollController: ignorePrimaryScrollController);
@@ -1144,8 +1182,6 @@ class ReorderableColumn extends ReorderableFlex {
   ReorderableColumn({
     required ReorderCallback onReorder,
     Key? key,
-    Widget? header,
-    Widget? footer,
     Widget? extendItemTop,
     Widget? extendItemBottom,
     EdgeInsets? padding,
@@ -1170,8 +1206,6 @@ class ReorderableColumn extends ReorderableFlex {
     double marginLeftDragingItem = 80,
   }) : super(
             key: key,
-            header: header,
-            footer: footer,
             children: children,
             onReorder: onReorder,
             onNoReorder: onNoReorder,

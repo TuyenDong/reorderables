@@ -10,6 +10,7 @@ class ColumnExample extends StatefulWidget {
 class _ColumnExampleState extends State<ColumnExample> {
   late List<String> _columns;
   final _controller = ReorderableController();
+  final _height = 50.0;
 
   @override
   void initState() {
@@ -21,7 +22,6 @@ class _ColumnExampleState extends State<ColumnExample> {
       'assets/river1.jpg',
       'assets/river2.jpg',
       'assets/river3.jpg',
-
     ];
   }
 
@@ -112,7 +112,7 @@ class _ColumnExampleState extends State<ColumnExample> {
     final size = MediaQuery.of(context).size;
     return Container(
       key: ValueKey('$index'),
-      height: 50,
+      height: _height,
       padding: EdgeInsets.all(1),
       decoration: BoxDecoration(
         color: index % 2 == 0 ? Colors.red : Colors.green,
@@ -129,6 +129,4 @@ class _ColumnExampleState extends State<ColumnExample> {
       ),
     );
   }
-
- 
 }
