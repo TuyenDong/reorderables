@@ -185,7 +185,7 @@ class DraggableByMouse<T extends Object> extends StatefulWidget {
     this.marginLeftDragingItem,
     this.maringBottomDragingItem,
     required this.indexDraging,
-  });
+  }): super(key: key);
   final Function(DragAvatar?, T?) onChange;
 
   final DragAvatar<Object>? currentDrag;
@@ -701,9 +701,9 @@ class _DragTargetMouseState<T extends Object>
   }
 }
 
-enum _DragEndKind { dropped, canceled }
+enum DragEndKind { dropped, canceled }
 
-typedef _OnDragEnd = void Function(
+typedef OnDragEnd = void Function(
     Velocity velocity, Offset offset, bool wasAccepted);
 
 // The lifetime of this object is a little dubious right now. Specifically, it
@@ -746,7 +746,7 @@ class DragAvatar<T extends Object> {
   final Widget? extendItemTop;
   final Widget? extendItemBottom;
   final Offset feedbackOffset;
-  final _OnDragEnd? onDragEnd;
+  final OnDragEnd? onDragEnd;
   final OverlayState overlayState;
   final bool ignoringFeedbackSemantics;
   final bool ignoringFeedbackPointer;
@@ -775,11 +775,11 @@ class DragAvatar<T extends Object> {
   // }
 
   void enDrag() {
-    finishDrag(_DragEndKind.dropped);
+    finishDrag(DragEndKind.dropped);
   }
 
   void cancel() {
-    finishDrag(_DragEndKind.canceled);
+    finishDrag(DragEndKind.canceled);
   }
 
   void _updateDrag(Offset globalPosition) {
@@ -842,9 +842,9 @@ class DragAvatar<T extends Object> {
     _enteredTargets.clear();
   }
 
-  void finishDrag(_DragEndKind endKind, [Velocity? velocity]) {
+  void finishDrag(DragEndKind endKind, [Velocity? velocity]) {
     bool wasAccepted = false;
-    if (endKind == _DragEndKind.dropped && _activeTarget != null) {
+    if (endKind == DragEndKind.dropped && _activeTarget != null) {
       _activeTarget!.didDrop(this);
       wasAccepted = true;
       _enteredTargets.remove(_activeTarget);

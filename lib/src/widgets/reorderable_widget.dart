@@ -2,9 +2,10 @@ import 'package:flutter/widgets.dart';
 
 class ReorderableWidget extends StatelessWidget implements ReorderableItem {
   final Widget child;
+  @override
   final bool reorderable;
 
-  ReorderableWidget({
+  const ReorderableWidget({
     required this.child,
     required this.reorderable,
     required Key key,
@@ -19,5 +20,6 @@ class ReorderableWidget extends StatelessWidget implements ReorderableItem {
 abstract class ReorderableItem extends Widget {
   final bool reorderable;
 
-  ReorderableItem({required this.reorderable});
+  const ReorderableItem({Key? key, required this.reorderable})
+      : super(key: key);
 }
