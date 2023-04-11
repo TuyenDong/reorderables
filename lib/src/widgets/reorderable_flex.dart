@@ -973,14 +973,16 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
         // delta < 0 => move left, delta > 0 move right
         if (dx <= _scrollZoneHeight() &&
             scrollOffset > topOffset &&
-            delta <= 0 &&
-            !_scrolling) {
-          _scrollToLeft();
+            delta <= 0) {
+          if (!_scrolling) {
+            _scrollToLeft();
+          }
         } else if (dx >= _maxHeight - _scrollZoneHeight() &&
             scrollOffset < bottomOffset &&
-            !_scrolling &&
             delta >= 0) {
-          _scrollToRight();
+          if (!_scrolling) {
+            _scrollToRight();
+          }
         } else {
           _stopScroll();
         }
@@ -990,14 +992,16 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
         // delta < 0 => move left, delta > 0 move right
         if (dx <= _scrollZoneWidth() &&
             scrollOffset > topOffset &&
-            delta <= 0 &&
-            !_scrolling) {
-          _scrollToLeft();
+            delta <= 0) {
+          if (!_scrolling) {
+            _scrollToLeft();
+          }
         } else if (dx >= _maxWidth - _scrollZoneWidth() &&
             scrollOffset < bottomOffset &&
-            !_scrolling &&
             delta >= 0) {
-          _scrollToRight();
+          if (!_scrolling) {
+            _scrollToRight();
+          }
         } else {
           _stopScroll();
         }
@@ -1005,8 +1009,8 @@ class _ReorderableFlexContentState extends State<_ReorderableFlexContent>
     }
   }
 
-  double _scrollZoneWidth() => 150;
-  double _scrollZoneHeight() => _maxHeight / 20;
+  double _scrollZoneWidth() => max(_maxWidth / 13, 40);
+  double _scrollZoneHeight() => max(_maxHeight / 20, 40);
 
   void _scrollToLeft() async {
     if (_scrolling) return;
