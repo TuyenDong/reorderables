@@ -37,8 +37,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _currentIndex = 0;
   final List<Widget> _examples = [
-    ColumnExample(),
     RowExample(),
+    ColumnExample(),
   ];
   final _bottomNavigationColor = Colors.blue;
 

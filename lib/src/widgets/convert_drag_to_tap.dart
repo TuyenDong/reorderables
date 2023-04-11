@@ -179,13 +179,13 @@ class DraggableByMouse<T extends Object> extends StatefulWidget {
     this.ignoringFeedbackSemantics = true,
     this.ignoringFeedbackPointer = true,
     this.rootOverlay = false,
-    this.hitTestBehavior = HitTestBehavior.deferToChild,
+    this.hitTestBehavior = HitTestBehavior.opaque,
     required this.onChange,
     this.currentDrag,
     this.marginLeftDragingItem,
     this.maringBottomDragingItem,
     required this.indexDraging,
-  }): super(key: key);
+  }) : super(key: key);
   final Function(DragAvatar?, T?) onChange;
 
   final DragAvatar<Object>? currentDrag;
@@ -367,7 +367,7 @@ class DraggableByMouse<T extends Object> extends StatefulWidget {
 
   /// How to behave during hit test.
   ///
-  /// Defaults to [HitTestBehavior.deferToChild].
+  /// Defaults to [HitTestBehavior.opaque].
   final HitTestBehavior hitTestBehavior;
 
   /// Creates a gesture recognizer that recognizes the start of the drag.
@@ -482,12 +482,24 @@ class _DraggableByMouseState<T extends Object>
         _activeCount == 0 || widget.childWhenDragging == null;
     if (canDrag) {
       return MouseRegion(
-        onEnter: (event) {
-          if (showChild) {
-            widget.currentDrag!.updatePos(context, widget.data);
-          }
+        onHover: (event) {
+          debugPrint('onHover');
         },
-        child: showChild ? widget.child : widget.childWhenDragging,
+        onExit: (event) {
+          debugPrint('onExit');
+        },
+        onEnter: (event) {
+          debugPrint('onEnter');
+          // if (showChild) {
+          //   widget.currentDrag!.updatePos(context, widget.data);
+          // }
+          // kiểm tra vị trí item hiện tại so với 2 biên
+          // nếu ko hiển thị hết thì ko đc call hàm updatePos
+          widget.currentDrag!.updatePos(context, widget.data);
+        },
+        child: Container(
+            color: Colors.transparent,
+            child: showChild ? widget.child : widget.childWhenDragging),
       );
     }
     return GestureDetector(
@@ -570,7 +582,7 @@ class DragTargetMouse<T extends Object> extends StatefulWidget {
     this.onAcceptWithDetails,
     this.onLeave,
     this.onMove,
-    this.hitTestBehavior = HitTestBehavior.translucent,
+    this.hitTestBehavior = HitTestBehavior.opaque,
   }) : super(key: key);
 
   /// Called to build the contents of this widget.
@@ -609,7 +621,7 @@ class DragTargetMouse<T extends Object> extends StatefulWidget {
 
   /// How to behave during hit testing.
   ///
-  /// Defaults to [HitTestBehavior.translucent].
+  /// Defaults to [HitTestBehavior.opaque].
   final HitTestBehavior hitTestBehavior;
 
   @override
@@ -761,6 +773,35 @@ class DragAvatar<T extends Object> {
   Offset _prePosition;
   Offset? _lastOffset;
   OverlayEntry? _entry;
+  bool _canPre = true;
+  bool _canNext = true;
+  late Offset _top;
+  late Offset _bottom;
+
+  void setMaxMin({required Offset topValue, required Offset bottomValue}) {
+    _top = topValue;
+    _bottom = bottomValue;
+  }
+
+  // handle update new positon by mouse
+  // reset _currentByKey
+  // update _current = current index
+  void updatePos(BuildContext context, T? pos) {
+    final offset = Utils.offset(context);
+    if (horizontal) {
+      debugPrint(
+          '(offset.dx + size.width/2) ${(offset.dx + size.width / 2)} _bottom.dx ${_bottom.dx}');
+      if (((offset.dx + size.width) < _bottom.dx) && (offset.dx > _top.dx)) {
+        _current = pos;
+        _currentByKey = null;
+        _update(Utils.offset(context));
+      }
+    } else {
+      _current = pos;
+      _currentByKey = null;
+      _update(Utils.offset(context));
+    }
+  }
 
   // update new position of draging item
   // bool get _isDrapUp => _prePosition.dy > _position.dy;
@@ -792,6 +833,7 @@ class DragAvatar<T extends Object> {
     final List<_DragTargetMouseState<Object>> targets =
         _getDragTargets(result.path).toList();
 
+    // debugPrint('targets $targets');
     // Leave old targets.
     _leaveAllEntered();
 
@@ -863,16 +905,12 @@ class DragAvatar<T extends Object> {
       return Positioned(
         left: _position.dx,
         top: _position.dy - (maringBottomDragingItem ?? 50),
-        child: IgnorePointer(
-          ignoring: ignoringFeedbackPointer,
-          ignoringSemantics: ignoringFeedbackSemantics,
-          child: Stack(
-            children: [
-              if (feedback != null) feedback!,
-              if (_extendItemTop != null) _extendItemTop!,
-              if (_extendItemBottom != null) _extendItemBottom!
-            ],
-          ),
+        child: Stack(
+          children: [
+            if (feedback != null) feedback!,
+            if (_extendItemTop != null) _extendItemTop!,
+            if (_extendItemBottom != null) _extendItemBottom!
+          ],
         ),
       );
     }
@@ -982,18 +1020,6 @@ class DragAvatar<T extends Object> {
   }
 
   bool get horizontal => axis == Axis.horizontal;
-
-  // handle update new positon by mouse
-  // reset _currentByKey
-  // update _current = current index
-  void updatePos(BuildContext context, T? pos) {
-    _current = pos;
-    _currentByKey = null;
-    _update(Utils.offset(context));
-  }
-
-  bool _canPre = true;
-  bool _canNext = true;
 
 //handle keyboard arrowDown
   void onNext({
